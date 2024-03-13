@@ -7,8 +7,7 @@ const router = express.Router();
 
 // 회원가입 API
 router.post('/sign-up', async (req, res, next) => {
-
-    const{error, value} = signUpSchema.validate(req.body, { abortEarly: true }); 
+    const { error, value } = signUpSchema.validate(req.body, { abortEarly: true });
     if (error) {
         const errorMessage = error.details.map(detail => {
             switch (detail.context.key) {
@@ -22,6 +21,7 @@ router.post('/sign-up', async (req, res, next) => {
                     return '데이터 형식이 올바르지 않습니다.';
             }
         }).join('\n');
+
 
         return res.status(400).json({ message: errorMessage });
     }
@@ -56,6 +56,7 @@ router.post('/sign-up', async (req, res, next) => {
             email,
             nickname,
             password: hashedPassword,
+            password: hashedPassword,
         },
     });
 
@@ -76,14 +77,14 @@ router.post('/log-in', async (req, res, next) => {
     if (!user) {
         return res.status(400).json({ message: '존재하지 않는 이메일입니다' });
     }
-    if (!(await bcrypt.compare(password, user.password))){
-        return res.status(401).json({message : '비밀번호가 올바르지 않습니다'})
+    if (!(await bcrypt.compare(password, user.password))) {
+        return res.status(401).json({ message: '비밀번호가 올바르지 않습니다' });
     }
-    const accessToken = jwt.sign({id : user.id}, accessTokenSecret, { expiresIn: '38m' });
+    const accessToken = jwt.sign({ id: user.id }, accessTokenSecret, { expiresIn: '38m' });
 
-    res.cookie('authorization', `Bearer ${accessToken}`)
-    
-    return res.status(200).json({message: '로그인에 성공하였습니다'})
+    res.cookie('authorization', `Bearer ${accessToken}`);
+
+    return res.status(200).json({ message: '로그인에 성공하였습니다' });
 });
 
 export default router;

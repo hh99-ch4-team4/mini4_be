@@ -20,7 +20,6 @@ model Users {
   password String @map("password")
   
   posts       Posts[]
-  options     Options[]
   comments    Comments[]
   voteHistory VoteHistory[]
   likes       Likes[]
@@ -37,13 +36,12 @@ model Posts {
   startDate     DateTime  @map("startDate")
   endDate       DateTime  @map("endDate")
   multiVote     Boolean   @default(false) @map("multiVote")
-  commentsCount Int       @default(0) @map("commentsCount")
-  userId        Int       @map("userId")
 
+  userId        Int       @map("userId")
   user          Users     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   options Options[]
-  comments      Comments[]  
+  comments Comments[]  
   likes Likes[]
 
   @@map("Posts")
@@ -54,15 +52,10 @@ model Options{
   content      String   @map("content")
   count        Int      @default(0) @map("count")
 
-
   postId       Int      @map("postId")
-  userId       Int      @map("userId")
-  //voteId       Int      @map("voteId")
-
-  voteHistory VoteHistory[]
+  post         Posts    @relation(fields:[postId], references: [id], onDelete: Cascade)
   
-  post         Posts       @relation(fields:[postId], references: [id], onDelete: Cascade)
-  user         Users       @relation(fields:[userId], references: [id], onDelete: Cascade)
+  voteHistory VoteHistory []
 
   @@map("Options")
 }
@@ -83,6 +76,7 @@ model Comments {
 
 model VoteHistory {
   id          Int      @id @default(autoincrement()) @map("id")
+
   userId      Int      @map("userId")
   optionId    Int      @map("optionId")
 
@@ -94,7 +88,7 @@ model VoteHistory {
 
 model Likes {
   id          Int      @id @default(autoincrement()) @map("id")
-  check       Boolean  @default(false)
+  likeCheck   Boolean       @default(false)
 
   userId      Int @map("userId")
   postId      Int @map("postId")
