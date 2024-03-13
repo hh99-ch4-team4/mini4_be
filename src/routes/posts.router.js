@@ -21,10 +21,10 @@ try {
         multiVote,
         userId,
         options: {
-        create: options.map(option => ({
+          create: options.map(option => ({
             content: option.content,// 초기 투표 수는 0으로 설정
-   // 옵션을 추가하는 사용자 ID
-        }))
+            userId // 옵션을 추가하는 사용자 ID
+          }))
         }
       },
       include: { options: true } // 생성된 옵션 정보도 함께 반환
