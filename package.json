@@ -1,4 +1,10 @@
 {
+    "name": "mini4_be",
+    "version": "1.0.0",
+    "main": "index.js",
+    "repository": "https://github.com/hh99-ch4-team4/mini4_be.git",
+    "author": "friend-0228 <kwj2712@gamil.com>",
+    "license": "MIT",
     "type": "module",
     "dependencies": {
         "@prisma/client": "^5.10.2",

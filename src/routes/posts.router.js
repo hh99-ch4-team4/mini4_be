@@ -18,7 +18,15 @@ router.post('/posts', authMiddleware, async (req, res, next) => {
             endDate: new Date(endDate),
             multiVote,
             userId,
+            options: {
+                create: options.map((option) => ({
+                    content: option.content,
+                    count: 0, // 초기 투표 수는 0으로 설정
+                    userId, // 옵션을 추가하는 사용자 ID
+                })),
+            },
         },
+        include: { options: true },
     });
     return res.status(201).json({ newPost, message: '카테고리를 등록하였습니다.' });
 });
