@@ -21,10 +21,8 @@ model Users {
   
   posts       Posts[]
   options     Options[]
-  options     Options[]
   comments    Comments[]
   voteHistory VoteHistory[]
-  likes       Likes[]
   likes       Likes[]
 
   @@map("Users")
@@ -67,8 +65,6 @@ model Options{
   user         Users       @relation(fields:[userId], references: [id], onDelete: Cascade)
 
   @@map("Options")
-
-  @@map("Options")
 }
 
 model Comments {
@@ -93,20 +89,6 @@ model VoteHistory {
   user        Users   @relation(fields: [userId], references: [id], onDelete: Cascade)
   option      Options @relation(fields: [optionId], references: [id], onDelete: Cascade)
 
-  @@map("VoteHistory")
-}
-
-model Likes {
-  id          Int      @id @default(autoincrement()) @map("id")
-  check       Boolean  @default(false)
-
-  userId      Int @map("userId")
-  postId      Int @map("postId")
-
-  user        Users @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post        Posts @relation(fields: [postId], references: [id], onDelete: Cascade)
-
-  @@map("Likes")
   @@map("VoteHistory")
 }
 
