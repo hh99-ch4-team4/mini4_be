@@ -73,11 +73,16 @@ router.get('/posts/:postId', async (req, res, next) => {
 });
 
 // 게시글 수정 API
-router.put('/posts/:postId', async (req, res, next) => {
+router.put('/posts/:postId', authMiddleware, async (req, res, next) => {
     try {
         const { postId } = req.params;
         const { title, content, startDate, endDate, multiVote, updatedAt } = req.body;
         if (!postId || !title || !content) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
+
+        // startDate와 endDate를 ISO-8601 형식으로 변환
+        const formattedStartDate = new Date(startDate).toISOString();
+        const formattedEndDate = new Date(endDate).toISOString();
+
 
         const post = await prisma.posts.findFirst({ where: { id: +postId } });
         if (!post) return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
@@ -86,8 +91,8 @@ router.put('/posts/:postId', async (req, res, next) => {
             data: {
                 title: title,
                 content: content,
-                startDate: startDate,
-                endDate: endDate,
+                startDate: formattedStartDate,
+                endDate: formattedEndDate,
                 multiVote: multiVote,
                 updatedAt: updatedAt,
             },
@@ -102,7 +107,7 @@ router.put('/posts/:postId', async (req, res, next) => {
 });
 
 // 게시글 삭제 API
-router.delete('/posts/:postId', async (req, res, next) => {
+router.delete('/posts/:postId', authMiddleware, async (req, res, next) => {
     try {
         const { postId } = req.params;
         if (!postId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
