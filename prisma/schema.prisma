@@ -20,9 +20,10 @@ model Users {
   password String @map("password")
   
   posts       Posts[]
-  commets     Comments[]
   options     Options[]
+  comments    Comments[]
   voteHistory VoteHistory[]
+  likes       Likes[]
 
   @@map("Users")
 }
@@ -36,14 +37,14 @@ model Posts {
   startDate     DateTime  @map("startDate")
   endDate       DateTime  @map("endDate")
   multiVote     Boolean   @default(false) @map("multiVote")
-  likeCount     Int       @default(0) @map("likeCount")
   commentsCount Int       @default(0) @map("commentsCount")
   userId        Int       @map("userId")
 
-  commets Comments[]
-  options Options[]
+  user          Users     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  user         Users  @relation(fields:[userId], references: [id], onDelete: Cascade)
+  options Options[]
+  comments      Comments[]  
+  likes Likes[]
 
   @@map("Posts")
 }
@@ -52,7 +53,7 @@ model Options{
   id           Int      @id @default(autoincrement()) @map("id")
   content      String   @map("content")
   count        Int      @map("count")
-  createdAt    DateTime @default(now()) @map("createdAt")
+
   postId       Int      @map("postId")
   userId       Int      @map("userId")
   voteId       Int      @map("voteId")
@@ -61,6 +62,8 @@ model Options{
   
   post         Posts       @relation(fields:[postId], references: [id], onDelete: Cascade)
   user         Users       @relation(fields:[userId], references: [id], onDelete: Cascade)
+
+  @@map("Options")
 }
 
 model Comments {
@@ -85,5 +88,18 @@ model VoteHistory {
   user        Users   @relation(fields: [userId], references: [id], onDelete: Cascade)
   option      Options @relation(fields: [optionId], references: [id], onDelete: Cascade)
 
-  @@map("voteHistory")
+  @@map("VoteHistory")
+}
+
+model Likes {
+  id          Int      @id @default(autoincrement()) @map("id")
+  check       Boolean  @default(false)
+
+  userId      Int @map("userId")
+  postId      Int @map("postId")
+
+  user        Users @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post        Posts @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("Likes")
 }

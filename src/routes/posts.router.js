@@ -36,7 +36,7 @@ router.get('/posts', async (req, res, next) => {
             startDate: true,
             endDate: true,
             multiVote: true,
-            likeCount: true,
+            // likeCount: true,
             commentsCount: true,
         },
         orderBy: {
