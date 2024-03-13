@@ -12,55 +12,57 @@ router.post('/sign-up', async (req, res, next) => {
     if (error) {
         const errorMessage = error.details.map(detail => {
             switch (detail.context.key) {
+                case 'email':
+                    return '이메일 형식이 올바르지 않습니다.';
                 case 'nickname':
                     return '닉네임 형식이 올바르지 않습니다.';
                 case 'password':
-                    return ' 비밀번호 형식이 올바르지 않습니다.';
+                    return '비밀번호 형식이 올바르지 않습니다.';
                 default:
-                    return ' 데이터 형식이 올바르지 않습니다.';
+                    return '데이터 형식이 올바르지 않습니다.';
             }
         }).join('\n');
 
         return res.status(400).json({ message: errorMessage });
     }
 
-    const { userName, nickname, password } = value;
+    const { email, nickname, password } = value;
 
-    if (!userName || !nickname || !password) {
-        return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다' });
-    }
-    const ExistingUser = await prisma.users.findFirst({
-        where : {userName}
+    const existingUser = await prisma.users.findFirst({
+        where: {
+            email: email
+        }
     });
-    if(ExistingUser){
-        return res.status(409).json({message : '이미 사용중인 유저네임 입니다'})
+
+    if (existingUser) {
+        return res.status(409).json({ message: '이미 사용중인 이메일 주소입니다.' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.users.create({
         data: {
-            userName,
+            email,
             nickname,
-            password : hashedPassword,
+            password: hashedPassword,
         },
     });
+
     return res.status(201).json({ user });
 });
-
 
 const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET
 // 로그인 API
 
 router.post('/log-in', async (req, res, next) => {
-    const { userName, password } = req.body;
-    if (!userName || !password) {
+    const { email, password } = req.body;
+    if (!email || !password) {
         return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다' });
     }
     const user = await prisma.users.findFirst({
-        where: { userName },
+        where: { email },
     });
     if (!user) {
-        return res.status(400).json({ message: '존재하지 않는 닉네임입니다' });
+        return res.status(400).json({ message: '존재하지 않는 이메일입니다' });
     }
     if (!(await bcrypt.compare(password, user.password))){
         return res.status(401).json({message : '비밀번호가 올바르지 않습니다'})
