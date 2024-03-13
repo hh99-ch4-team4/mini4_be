@@ -1,11 +1,15 @@
 import express from 'express';
 import { prisma } from '../utils/prisma/index.js';
+import authMiddleware from '../middlewares/auth.middleware.js';
+
 
 const router = express.Router();
 
 // 게시글 등록 API
-router.post('/posts', async (req, res, next) => {
-    const { title, content, startDate, endDate, multiVote, userId } = req.body;
+router.post('/posts', authMiddleware, async (req, res, next) => {
+    const { title, content, startDate, endDate, multiVote} = req.body;
+    const { id: userId } = req.user;
+// 
 
     const newPost = await prisma.posts.create({
         data: {
@@ -24,7 +28,7 @@ router.post('/posts', async (req, res, next) => {
 router.get('/posts', async (req, res, next) => {
     const postList = await prisma.posts.findMany({
         select: {
-            id: true,
+            id : true,
             title: true,
             content: true,
             createdAt: true,
@@ -43,6 +47,7 @@ router.get('/posts', async (req, res, next) => {
     return res.status(200).json({ data: postList });
 });
 
+
 // 게시글 상세 조회 API
 router.get('/posts/:postId', async (req, res, next) => {
     const { postId } = req.params;
@@ -56,12 +61,12 @@ router.get('/posts/:postId', async (req, res, next) => {
             startDate: true,
             endDate: true,
             multiVote: true,
-            // user: {
-            //     select: {
-            //         userName: true,
-            //         nickname: true
-            //     }
-            // }
+            user: {
+                select: {
+                    userName: true,
+                    nickname: true
+                }
+            }
         },
     });
     return res.status(200).json({ post });
