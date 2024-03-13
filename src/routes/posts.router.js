@@ -7,23 +7,36 @@ const router = express.Router();
 
 // 게시글 등록 API
 router.post('/posts', authMiddleware, async (req, res, next) => {
-    const { title, content, startDate, endDate, multiVote} = req.body;
+    const { title, content, startDate, endDate, multiVote, options} = req.body;
     const { id: userId } = req.user;
-// 
 
+try {
+    // 게시물(투표)과 옵션을 데이터베이스에 생성
     const newPost = await prisma.posts.create({
-        data: {
-            title,
-            content,
-            startDate: new Date(startDate),
-            endDate: new Date(endDate),
-            multiVote,
-            userId,
-        },
+      data: {
+        title,
+        content,
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        multiVote,
+        userId,
+        options: {
+          create: options.map(option => ({
+            content: option.content,// 초기 투표 수는 0으로 설정
+            userId // 옵션을 추가하는 사용자 ID
+          }))
+        }
+      },
+      include: { options: true } // 생성된 옵션 정보도 함께 반환
     });
-    return res.status(201).json({ newPost, message: '카테고리를 등록하였습니다.' });
-});
 
+    // 생성된 게시물 데이터를 프론트엔드로 응답
+    res.status(201).json(newPost);
+  } catch (error) {
+    console.error("Error creating post:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 // 게시글 전체 조회 API
 router.get('/posts', async (req, res, next) => {
     const postList = await prisma.posts.findMany({
