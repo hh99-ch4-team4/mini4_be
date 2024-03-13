@@ -9,7 +9,7 @@ const router = express.Router();
 router.post('/posts', authMiddleware, async (req, res, next) => {
     const { title, content, startDate, endDate, multiVote} = req.body;
     const { id: userId } = req.user;
-
+// 
 
     const newPost = await prisma.posts.create({
         data: {
