@@ -3,7 +3,7 @@ import { prisma } from '../utils/prisma/index.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 const router = express.Router();
-
+//
 // 회원가입 API
 router.post('/sign-up', async (req, res, next) => {
     const { userName, nickname, password } = req.body;
