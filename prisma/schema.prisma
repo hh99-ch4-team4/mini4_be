@@ -15,7 +15,7 @@ datasource db {
 
 model Users {
   id          Int    @id     @default(autoincrement()) @map("id")
-  userName    String @unique @map("email")
+  email    String @unique @map("userName")
   nickname    String @map("nickname")
   password    String @map("password")
   
