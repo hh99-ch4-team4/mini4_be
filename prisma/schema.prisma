@@ -52,12 +52,12 @@ model Posts {
 model Options{
   id           Int      @id @default(autoincrement()) @map("id")
   content      String   @map("content")
-  count        Int      @map("count")
+  count        Int      @default(0) @map("count")
 
 
   postId       Int      @map("postId")
   userId       Int      @map("userId")
-  voteId       Int      @map("voteId")
+  //voteId       Int      @map("voteId")
 
   voteHistory VoteHistory[]
   

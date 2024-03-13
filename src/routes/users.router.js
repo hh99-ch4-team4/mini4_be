@@ -1,12 +1,31 @@
 import express from 'express';
 import { prisma } from '../utils/prisma/index.js';
+import signUpSchema from '../utils/schemas/signupSchema.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 const router = express.Router();
-//
+
 // 회원가입 API
 router.post('/sign-up', async (req, res, next) => {
-    const { userName, nickname, password } = req.body;
+
+    const{error, value} = signUpSchema.validate(req.body, { abortEarly: true }); 
+    if (error) {
+        const errorMessage = error.details.map(detail => {
+            switch (detail.context.key) {
+                case 'nickname':
+                    return '닉네임 형식이 올바르지 않습니다.';
+                case 'password':
+                    return ' 비밀번호 형식이 올바르지 않습니다.';
+                default:
+                    return ' 데이터 형식이 올바르지 않습니다.';
+            }
+        }).join('\n');
+
+        return res.status(400).json({ message: errorMessage });
+    }
+
+    const { userName, nickname, password } = value;
+
     if (!userName || !nickname || !password) {
         return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다' });
     }
