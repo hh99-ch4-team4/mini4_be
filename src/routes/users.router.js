@@ -7,19 +7,20 @@ const router = express.Router();
 
 // 회원가입 API
 router.post('/sign-up', async (req, res, next) => {
-
-    const{error, value} = signUpSchema.validate(req.body, { abortEarly: true }); 
+    const { error, value } = signUpSchema.validate(req.body, { abortEarly: true });
     if (error) {
-        const errorMessage = error.details.map(detail => {
-            switch (detail.context.key) {
-                case 'nickname':
-                    return '닉네임 형식이 올바르지 않습니다.';
-                case 'password':
-                    return ' 비밀번호 형식이 올바르지 않습니다.';
-                default:
-                    return ' 데이터 형식이 올바르지 않습니다.';
-            }
-        }).join('\n');
+        const errorMessage = error.details
+            .map((detail) => {
+                switch (detail.context.key) {
+                    case 'nickname':
+                        return '닉네임 형식이 올바르지 않습니다.';
+                    case 'password':
+                        return ' 비밀번호 형식이 올바르지 않습니다.';
+                    default:
+                        return ' 데이터 형식이 올바르지 않습니다.';
+                }
+            })
+            .join('\n');
 
         return res.status(400).json({ message: errorMessage });
     }

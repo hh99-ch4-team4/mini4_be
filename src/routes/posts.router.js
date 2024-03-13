@@ -22,7 +22,6 @@ router.post('/posts', authMiddleware, async (req, res, next) => {
                 options: {
                     create: options.map((option) => ({
                         content: option.content, // 초기 투표 수는 0으로 설정
-                        userId, // 옵션을 추가하는 사용자 ID
                     })),
                 },
             },
