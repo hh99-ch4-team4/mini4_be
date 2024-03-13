@@ -28,14 +28,26 @@ router.post('/sign-up', async (req, res, next) => {
 
     const { email, nickname, password } = value;
 
-    const existingUser = await prisma.users.findFirst({
+    // 이메일 중복 확인
+    const existingUserByEmail = await prisma.users.findFirst({
         where: {
             email: email
         }
     });
 
-    if (existingUser) {
+    if (existingUserByEmail) {
         return res.status(409).json({ message: '이미 사용중인 이메일 주소입니다.' });
+    }
+    
+    // 닉네임 중복 확인
+    const existingUserByNickname = await prisma.users.findFirst({
+        where: {
+            nickname: nickname
+        }
+    });
+
+    if (existingUserByNickname) {
+        return res.status(409).json({ message: '이미 사용중인 닉네임입니다.' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
