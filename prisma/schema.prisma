@@ -14,10 +14,10 @@ datasource db {
 }
 
 model Users {
-  id          Int    @id     @default(autoincrement()) @map("id")
-  email    String @unique @map("userName")
-  nickname    String @map("nickname")
-  password    String @map("password")
+  id       Int    @id     @default(autoincrement()) @map("id")
+  email String @unique @map("email")
+  nickname String @map("nickname")
+  password String @map("password")
   
   posts       Posts[]
   comments    Comments[]

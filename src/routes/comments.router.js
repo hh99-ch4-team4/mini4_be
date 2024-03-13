@@ -4,23 +4,26 @@ import { prisma } from '../utils/prisma/index.js';
 const router = express.Router();
 
 // 댓글 생성
-try {
-    const { postId } = req.params;
-    if (!postId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
+router.post('/posts/:postId/comments', async (req, res, next) => {
+    try {
+        const { postId } = req.params;
+        const { content } = req.body;
 
-    const post = await prisma.posts.findFirst({ where: { id: +postId } });
-    if (!post) return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
+        if (!postId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
 
-    const comment = await prisma.comments.create({
-        data: { content },
-        where: { id: +postId },
-    });
+        const post = await prisma.posts.findFirst({ where: { id: +postId } });
+        if (!post) return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
 
-    return res.status(200).json(comment);
-} catch (error) {
-    console.error(error);
-    // next(error);
-}
+        const comment = await prisma.comments.create({
+            data: { content: content, postId: +postId },
+        });
+
+        return res.status(200).json(comment);
+    } catch (error) {
+        console.error(error);
+        // next(error);
+    }
+});
 
 // 댓글 조회
 router.get('/posts/:postId/comments', async (req, res, next) => {
@@ -31,7 +34,7 @@ router.get('/posts/:postId/comments', async (req, res, next) => {
         const post = await prisma.posts.findFirst({ where: { id: +postId } });
         if (!post) return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
 
-        const comments = await prisma.comments.findMany({ where: { id: +postId } });
+        const comments = await prisma.comments.findMany({ where: { postId: +postId } });
 
         return res.status(200).json(comments);
     } catch (error) {
@@ -44,13 +47,15 @@ router.get('/posts/:postId/comments', async (req, res, next) => {
 router.put('/posts/:postId/comments/:commentId', async (req, res, next) => {
     try {
         const { postId, commentId } = req.params;
+        const { content } = req.body;
+
         if (!postId || !commentId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
 
         const post = await prisma.posts.findFirst({ where: { id: +postId } });
         if (!post) return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
 
         const comment = await prisma.comments.update({
-            data: { content },
+            data: { content: content },
             where: { id: +commentId },
         });
         return res.status(200).json(comment);
