@@ -20,7 +20,6 @@ model Users {
   password String @map("password")
   
   posts       Posts[]
-  options     Options[]
   comments    Comments[]
   voteHistory VoteHistory[]
   likes       Likes[]
@@ -56,13 +55,12 @@ model Options{
 
 
   postId       Int      @map("postId")
-  userId       Int      @map("userId")
   //voteId       Int      @map("voteId")
 
   voteHistory VoteHistory[]
   
   post         Posts       @relation(fields:[postId], references: [id], onDelete: Cascade)
-  user         Users       @relation(fields:[userId], references: [id], onDelete: Cascade)
+
 
   @@map("Options")
 }
