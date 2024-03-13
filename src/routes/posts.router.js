@@ -28,7 +28,7 @@ router.post('/posts', authMiddleware, async (req, res, next) => {
 router.get('/posts', async (req, res, next) => {
     const postList = await prisma.posts.findMany({
         select: {
-            id: true,
+            id : true,
             title: true,
             content: true,
             createdAt: true,
@@ -46,6 +46,7 @@ router.get('/posts', async (req, res, next) => {
 
     return res.status(200).json({ data: postList });
 });
+
 
 // 게시글 상세 조회 API
 router.get('/posts/:postId', async (req, res, next) => {
