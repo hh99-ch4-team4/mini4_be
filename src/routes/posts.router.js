@@ -1,11 +1,15 @@
 import express from 'express';
 import { prisma } from '../utils/prisma/index.js';
+import authMiddleware from '../middlewares/auth.middleware.js';
+
 
 const router = express.Router();
 
 // 게시글 등록 API
-router.post('/posts', async (req, res, next) => {
-    const { title, content, startDate, endDate, multiVote, userId } = req.body;
+router.post('/posts', authMiddleware, async (req, res, next) => {
+    const { title, content, startDate, endDate, multiVote} = req.body;
+    const { id: userId } = req.user;
+
 
     const newPost = await prisma.posts.create({
         data: {
@@ -56,12 +60,12 @@ router.get('/posts/:postId', async (req, res, next) => {
             startDate: true,
             endDate: true,
             multiVote: true,
-            // user: {
-            //     select: {
-            //         userName: true,
-            //         nickname: true
-            //     }
-            // }
+            user: {
+                select: {
+                    userName: true,
+                    nickname: true
+                }
+            }
         },
     });
     return res.status(200).json({ post });
@@ -79,7 +83,6 @@ router.put('/posts/:postId', async (req, res, next) => {
 
         const updatedPost = await prisma.posts.update({
             data: {
-                id: true,
                 title: title,
                 content: content,
                 startDate: startDate,
