@@ -89,7 +89,13 @@ router.post('/log-in', async (req, res, next) => {
 
         // 리프레시 토큰을 쿠키에 설정
     res.cookie('refreshToken', `Bearer ${refreshToken}`);
+<<<<<<< HEAD
     //res.cookie('accessToken', `Bearer ${accessToken}`);
+=======
+    res.cookie('accessToken', `Bearer ${accessToken}`);
+
+
+>>>>>>> b9ccc72c944114049c1646a2adbe6e0d6204c635
         return res.status(200).json({ 
             message: '로그인에 성공하였습니다',
             accessToken: `Bearer ${accessToken}` });
