@@ -8,11 +8,11 @@ const router = express.Router();
 
 // 회원가입 API
 router.post('/sign-up', async (req, res, next) => {
-    const { error, value } = signUpSchema.validate(req.body, { abortEarly: true });
+    const { error, value } = signUpSchema.validate(req.body, { abortEarly: false });
     if (error) {
         const errorMessage = error.details
             .map((detail) => {
-                switch (detail.context.key) {
+                switch (detail.path[0]) {
                     case 'email':
                         return '이메일 형식이 올바르지 않습니다.';
                     case 'nickname':
@@ -64,10 +64,11 @@ router.post('/sign-up', async (req, res, next) => {
     return res.status(201).json({ user });
 });
 
-const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET;
+
 // 로그인 API
 
 router.post('/log-in', async (req, res, next) => {
+    try {
     const { email, password } = req.body;
     if (!email || !password) {
         return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다' });
@@ -81,11 +82,19 @@ router.post('/log-in', async (req, res, next) => {
     if (!(await bcrypt.compare(password, user.password))) {
         return res.status(401).json({ message: '비밀번호가 올바르지 않습니다' });
     }
-    const accessToken = jwt.sign({ id: user.id }, accessTokenSecret, { expiresIn: '38m' });
 
-    res.cookie('authorization', `Bearer ${accessToken}`);
+        // 토큰 생성
+        const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '38m' });
+        const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
 
-    return res.status(200).json({ message: '로그인에 성공하였습니다' });
+        // 리프레시 토큰을 쿠키에 설정
+    res.cookie('refreshToken', `Bearer ${refreshToken}`);
+
+        return res.status(200).json({ 
+            message: '로그인에 성공하였습니다',
+            accessToken: `Bearer ${accessToken}` });
+    } catch (error) {
+        next(error);
+    }
 });
-
 export default router;
