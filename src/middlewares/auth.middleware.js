@@ -5,6 +5,7 @@ export default async function (req, res, next) {
     try {
         // 1. 클라이언트로부터 쿠키를 전달받는다
         const { accessToken  } = req.cookies;
+        console.log(accessToken)
         // 쿠키가 존재하지 않으면, 인증된 사용자가 아님
         if (!accessToken ) return res.status(401).json({ message: '로그인이 필요한 서비스입니다' });
         // 인증 정보가 있는 경우, 엑세스 토큰과 리프레시 토큰을 추출

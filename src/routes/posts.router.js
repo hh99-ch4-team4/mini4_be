@@ -9,7 +9,7 @@ const formatDate = (date) => date.toISOString().split('T')[0];
 
 // 투표 등록 API (완)
 router.post('/posts', authMiddleware, async (req, res, next) => {
-    const { title, content, startDate, endDate, multiVote, options } = req.body;
+    const { title, content, startDate, endDate, options } = req.body;
     const { id: userId } = req.user;
 
     try {
@@ -33,7 +33,6 @@ router.post('/posts', authMiddleware, async (req, res, next) => {
                 content,
                 startDate: new Date(startDate),
                 endDate: new Date(endDate),
-                multiVote,
                 userId,
                 options: {
                     create: options.map((option) => ({
@@ -51,7 +50,6 @@ router.post('/posts', authMiddleware, async (req, res, next) => {
             createdAt: formatDate(newPost.createdAt),
             startDate: formatDate(new Date(startDate)),
             endDate: formatDate(new Date(endDate)),
-            multiVote: newPost.multiVote,
             userId: newPost.userId,
             options: newPost.options,
         };
@@ -70,7 +68,9 @@ router.get('/posts', async (req, res, next) => {
         select: {
             id: true,
             title: true,
-            createdAt: true,
+            startDate: true,
+            endDate: true
+            //createdAt: true,
             //likeCount: true,
             //commentsCount: true,
         },
@@ -82,7 +82,9 @@ router.get('/posts', async (req, res, next) => {
     const response = postList.map((post) => ({
         id: post.id,
         title: post.title,
-        createdAt: formatDate(post.createdAt), // 각 게시물의 createdAt을 변환
+        startDate: formatDate(post.startDate),
+        endDate: formatDate(post.endDate)
+        //createdAt: formatDate(post.createdAt), // 각 게시물의 createdAt을 변환
         //likeCount: post.likeCount, // 필요하다면 이 부분을 활성화
         //commentsCount: post.commentsCount, // 필요하다면 이 부분을 활성화
     }));
@@ -115,10 +117,12 @@ router.get('/posts/:postId', authMiddleware, async (req, res, next) => {
             id: post.id,
             title: post.title,
             content: post.content,
-            startDate: formatDate(new Date(post.startDate)),
-            endDate: formatDate(new Date(post.endDate)),
-            multiVote: post.multiVote,
+            createdAt: formatDate(post.createdAt),
+            updatedAt: formatDate(post.updatedAt),
+            startDate: formatDate(post.startDate),
+            endDate: formatDate(post.endDate),
             user: post.user ? { nickname: post.user.nickname } : null,
+            userId: userId,
             options: post.options.map((option) => ({
                 id: option.id,
                 content: option.content,
