@@ -9,19 +9,20 @@ const router = express.Router();
 router.post('/sign-up', async (req, res, next) => {
     const { error, value } = signUpSchema.validate(req.body, { abortEarly: false });
     if (error) {
-        const errorMessage = error.details.map(detail => {
-            switch (detail.path[0]) {
-                case 'email':
-                    return '이메일 형식이 올바르지 않습니다.';
-                case 'nickname':
-                    return '닉네임 형식이 올바르지 않습니다.';
-                case 'password':
-                    return '비밀번호 형식이 올바르지 않습니다.';
-                default:
-                    return '데이터 형식이 올바르지 않습니다.';
-            }
-        }).join('\n');
-
+        const errorMessage = error.details
+            .map((detail) => {
+                switch (detail.path[0]) {
+                    case 'email':
+                        return '이메일 형식이 올바르지 않습니다.';
+                    case 'nickname':
+                        return '닉네임 형식이 올바르지 않습니다.';
+                    case 'password':
+                        return '비밀번호 형식이 올바르지 않습니다.';
+                    default:
+                        return '데이터 형식이 올바르지 않습니다.';
+                }
+            })
+            .join('\n');
 
         return res.status(400).json({ message: errorMessage });
     }
@@ -31,19 +32,19 @@ router.post('/sign-up', async (req, res, next) => {
     // 이메일 중복 확인
     const existingUserByEmail = await prisma.users.findFirst({
         where: {
-            email: email
-        }
+            email: email,
+        },
     });
 
     if (existingUserByEmail) {
         return res.status(409).json({ message: '이미 사용중인 이메일 주소입니다.' });
     }
-    
+
     // 닉네임 중복 확인
     const existingUserByNickname = await prisma.users.findFirst({
         where: {
-            nickname: nickname
-        }
+            nickname: nickname,
+        },
     });
 
     if (existingUserByNickname) {
@@ -62,10 +63,11 @@ router.post('/sign-up', async (req, res, next) => {
     return res.status(201).json({ user });
 });
 
-const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET
+
 // 로그인 API
 
 router.post('/log-in', async (req, res, next) => {
+    try {
     const { email, password } = req.body;
     if (!email || !password) {
         return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다' });
@@ -79,11 +81,18 @@ router.post('/log-in', async (req, res, next) => {
     if (!(await bcrypt.compare(password, user.password))) {
         return res.status(401).json({ message: '비밀번호가 올바르지 않습니다' });
     }
-    const accessToken = jwt.sign({ id: user.id }, accessTokenSecret, { expiresIn: '38m' });
 
-    res.cookie('authorization', `Bearer ${accessToken}`);
+        // 토큰 생성
+        const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10s' });
+        const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
 
-    return res.status(200).json({ message: '로그인에 성공하였습니다' });
+        // 리프레시 토큰을 쿠키에 설정
+    res.cookie('accessToken', `Bearer ${accessToken}`);
+    res.cookie('refreshToken', `Bearer ${refreshToken}`);
+
+        return res.status(200).json({ message: '로그인에 성공하였습니다' });
+    } catch (error) {
+        next(error);
+    }
 });
-
 export default router;

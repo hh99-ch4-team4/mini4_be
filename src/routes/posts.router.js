@@ -74,7 +74,7 @@ router.get('/posts/:postId', async (req, res, next) => {
             multiVote: true,
             user: {
                 select: {
-                    userName: true,
+                    email: true,
                     nickname: true,
                 },
             },
