@@ -10,6 +10,19 @@ router.post('/posts', authMiddleware, async (req, res, next) => {
     const { id: userId } = req.user;
 
     try {
+        if(!title || !content ||!startDate ||!endDate ||!multiVote || !options){
+            return res.status(401).json({ message : "데이터의 형식이 올바르지 않습니다."})
+        }
+
+
+
+
+
+
+
+
+
+
         // 게시물(투표)과 옵션을 데이터베이스에 생성
         const newPost = await prisma.posts.create({
             data: {
