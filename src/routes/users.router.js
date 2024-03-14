@@ -86,7 +86,17 @@ router.post('/log-in', async (req, res, next) => {
         const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
 
         // 리프레시 토큰을 쿠키에 설정
-        res.cookie('refreshToken', `Bearer ${refreshToken}`);
+        res.cookie(
+            'refreshToken',
+            `Bearer ${refreshToken}`
+            // {
+            //     domain: 'example.com',
+            //     httpOnly: true, // JavaScript를 통한 접근 방지
+            //     secure: true, // HTTPS를 통해서만 쿠키를 전송
+            //     path: '/', // 이 경로와 하위 경로에서 쿠키가 전송됨
+            //     expiresIn: new Date(Date.now() + 900000), // 쿠키 만료 시간 설정 예시
+            // }
+        );
 
         return res.status(200).json({
             message: '로그인에 성공하였습니다',
@@ -96,4 +106,5 @@ router.post('/log-in', async (req, res, next) => {
         next(error);
     }
 });
+
 export default router;

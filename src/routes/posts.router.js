@@ -206,31 +206,42 @@ router.put('/posts/:postId', authMiddleware, async (req, res, next) => {
         const { title, content, startDate, endDate, options } = req.body;
         if (!postId || !title || !content) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
 
-        const formattedStartDate = new Date(startDate).toISOString();
-        const formattedEndDate = new Date(endDate).toISOString();
+        // const formattedStartDate = new Date(startDate).toISOString();
+        // const formattedEndDate = new Date(endDate).toISOString();
 
         const post = await prisma.posts.findFirst({ where: { id: +postId } });
         if (!post) return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
 
+        // data: {
+        //     ...(name && { name }),
+        //     ...(description && { description }),
+        //     ...(price !== undefined && { price }),
+        //     ...(order && { order }),
+        //     ...(status && { status }),
         const updatedPost = await prisma.posts.update({
+            where: { id: +postId }, // postId를 숫자로 변환하여 사용
             data: {
-                title: title,
-                content: content,
-                startDate: formattedStartDate,
-                endDate: formattedEndDate,
-                // multiVote: multiVote,
-                // updatedAt: updatedAt,
-                // option 추가
-                options: {
-                    update: options.map((option) => ({
-                        content: option.content,
-                    })),
-                },
+                ...(title && { title }),
+                ...(content && { content }),
+
+                // ...(formattedStartDate && { formattedStartDate }),
+                ...(startDate && { startDate }),
+                ...(endDate && { startDate }),
+                // ...(multiVote && { multiVote }), // multiVote 사용 시 주석 해제
+                // ...(updatedAt && { updatedAt }), // updatedAt 사용 시 주석 해제
+                ...(options &&
+                    options.length > 0 && {
+                        options: {
+                            update: options.map((option) => ({
+                                where: { id: option.id }, // 옵션을 식별할 수 있는 고유한 ID로 가정
+                                data: { content: option.content },
+                            })),
+                        },
+                    }),
             },
-            where: { id: +postId },
         });
 
-        return res.status(200).json({ data: updatedPost, message: '게시글을 수정하였습니다.' });
+        return res.status(200).json(updatedPost, { message: '게시글을 수정하였습니다.' });
     } catch (error) {
         console.error(error);
         next(error);
