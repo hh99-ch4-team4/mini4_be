@@ -55,6 +55,7 @@ model Options{
   postId       Int      @map("postId")
   post         Posts    @relation(fields:[postId], references: [id], onDelete: Cascade)
   
+
   voteHistory VoteHistory []
 
   @@map("Options")

@@ -3,6 +3,7 @@ import { prisma } from '../utils/prisma/index.js';
 import signUpSchema from '../utils/schemas/signupSchema.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+
 const router = express.Router();
 
 // 회원가입 API
