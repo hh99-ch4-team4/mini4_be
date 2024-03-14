@@ -121,7 +121,8 @@ router.get('/posts/:postId', authMiddleware, async (req, res, next) => {
             options: post.options.map((option) => ({
                 id: option.id,
                 content: option.content,
-                voted: option.voteHistory.some((vote) => vote.userId === userId), // 현재 사용자가 투표했는지 여부
+
+                count: option.count,
                 voteHistory: option.voteHistory, // 전체 투표 기록 포함 (선택적)
             })),
         };
@@ -149,7 +150,7 @@ router.post('/vote/:postId', authMiddleware, async (req, res) => {
         });
 
         if (!post) {
-            return res.status(404).json({ message: '투표를 찾을 수 없습니다.' });
+            return res.status(404).json({ message: '존재하지않는 게시물 입니다.' });
         }
 
         const option = post.options.find((o) => o.id === parseInt(optionId));
@@ -185,6 +186,7 @@ router.post('/vote/:postId', authMiddleware, async (req, res) => {
                     optionId,
                 },
             });
+
 
             await prisma.options.update({
                 where: { id: optionId },
