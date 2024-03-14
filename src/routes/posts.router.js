@@ -132,7 +132,6 @@ router.put('/posts/:postId', authMiddleware, async (req, res, next) => {
         const { title, content, startDate, endDate, multiVote, updatedAt } = req.body;
         if (!postId || !title || !content) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
 
-
         const formattedStartDate = new Date(startDate).toISOString();
         const formattedEndDate = new Date(endDate).toISOString();
 
