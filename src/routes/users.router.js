@@ -64,43 +64,78 @@ router.post('/sign-up', async (req, res, next) => {
     return res.status(201).json({ user });
 });
 
-
 // 로그인 API
 
 router.post('/log-in', async (req, res, next) => {
     try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-        return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다' });
-    }
-    const user = await prisma.users.findFirst({
-        where: { email },
-    });
-    if (!user) {
-        return res.status(400).json({ message: '존재하지 않는 이메일입니다' });
-    }
-    if (!(await bcrypt.compare(password, user.password))) {
-        return res.status(401).json({ message: '비밀번호가 올바르지 않습니다' });
-    }
+        const { email, password } = req.body;
+        if (!email || !password) {
+            return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다' });
+        }
+        const user = await prisma.users.findFirst({
+            where: { email },
+        });
+        if (!user) {
+            return res.status(400).json({ message: '존재하지 않는 이메일입니다' });
+        }
+        if (!(await bcrypt.compare(password, user.password))) {
+            return res.status(401).json({ message: '비밀번호가 올바르지 않습니다' });
+        }
 
         // 토큰 생성
         const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '38m' });
         const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
 
         // 리프레시 토큰을 쿠키에 설정
-    res.cookie('refreshToken', `Bearer ${refreshToken}`);
-<<<<<<< HEAD
-    //res.cookie('accessToken', `Bearer ${accessToken}`);
-=======
-    res.cookie('accessToken', `Bearer ${accessToken}`);
+        res.cookie('refreshToken', `Bearer ${refreshToken}`);
 
+        //res.cookie('accessToken', `Bearer ${accessToken}`);
+        res.cookie('accessToken', `Bearer ${accessToken}`);
 
->>>>>>> b9ccc72c944114049c1646a2adbe6e0d6204c635
-        return res.status(200).json({ 
+        return res.status(200).json({
             message: '로그인에 성공하였습니다',
-            accessToken: `Bearer ${accessToken}` });
+            accessToken: `Bearer ${accessToken}`,
+        });
     } catch (error) {
         next(error);
     }
 });
+
+// 리프레쉬 API
+router.post('/refresh', async (req, res) => {
+    const { authorization } = req.headers;
+
+    if (!authorization) return res.status(401).json({ message: '로그인이 필요한 서비스입니다' });
+
+    // 인증 정보가 있는 경우, 리프레시 토큰을 추출
+    const [bearer, refreshToken] = authorization.split(' ');
+    // // 만약 토큰 타입이 Bearer가 아닐때 오류
+    if (bearer !== 'Bearer') return res.status(401).json({ message: '토큰 타입이 Bearer 형식이 아닙니다' });
+
+    // 리프레시 토큰을 확인하고 사용자 ID를 추출
+    let decodedRefreshToken;
+    try {
+        // JWT를 사용하여 서버에서 발급한 토큰이 유효한지 검증
+        decodedRefreshToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+
+        // 토큰 생성
+        const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '38m' });
+        const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
+
+        return res.status(200).json({
+            accessToken: `Bearer ${accessToken}`,
+            refreshToken: `Bearer ${refreshToken}`,
+        });
+    } catch (error) {
+        // 리프레시 토큰이 만료된 경우, 리프레시 토큰을 확인하고 새로운 엑세스 토큰을 발급
+        if (error.name === 'TokenExpiredError') {
+            // 에러 띄우기
+            // return res.redirect('service.com/login'); // 나중에 frontend 주소로 변경하기
+            return res.status(200).json({ message: 'refresh token이 만료되었습니다 = 성공!' });
+        } else {
+            throw error;
+        }
+    }
+});
+
 export default router;
