@@ -154,7 +154,7 @@ router.post('/vote/:postId', authMiddleware, async (req, res) => {
       });
   
       if (!post) {
-        return res.status(404).json({ message: '투표를 찾을 수 없습니다.' });
+        return res.status(404).json({ message: '존재하지않는 게시물 입니다.' });
       }
   
       const option = post.options.find(o => o.id === parseInt(optionId));
