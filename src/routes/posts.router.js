@@ -9,8 +9,9 @@ const formatDate = (date) => date.toISOString().split('T')[0];
 
 // 투표 등록 API (완)
 router.post('/posts', authMiddleware, async (req, res, next) => {
-    const { title, content, startDate, endDate, multiVote, options } = req.body;
-    const { id: userId } = req.user;
+    const { title, content, startDate, endDate, options } = req.body;
+    // const { id: userId } = req.user;
+    const userId = req.user.id;
 
     try {
         if (
@@ -33,7 +34,6 @@ router.post('/posts', authMiddleware, async (req, res, next) => {
                 content,
                 startDate: new Date(startDate),
                 endDate: new Date(endDate),
-                multiVote,
                 userId,
                 options: {
                     create: options.map((option) => ({
@@ -51,7 +51,6 @@ router.post('/posts', authMiddleware, async (req, res, next) => {
             createdAt: formatDate(newPost.createdAt),
             startDate: formatDate(new Date(startDate)),
             endDate: formatDate(new Date(endDate)),
-            multiVote: newPost.multiVote,
             userId: newPost.userId,
             options: newPost.options,
         };
@@ -102,7 +101,7 @@ router.get('/posts/:postId', authMiddleware, async (req, res, next) => {
                 options: {
                     include: {
                         voteHistory: true, // 현재 사용자의 투표 기록 전체를 포함
-                    }
+                    },
                 },
             },
         });
@@ -119,10 +118,10 @@ router.get('/posts/:postId', authMiddleware, async (req, res, next) => {
             endDate: formatDate(new Date(post.endDate)),
             multiVote: post.multiVote,
             user: post.user ? { nickname: post.user.nickname } : null,
-            options: post.options.map(option => ({
+            options: post.options.map((option) => ({
                 id: option.id,
                 content: option.content,
-                voted: option.voteHistory.some(vote => vote.userId === userId), // 현재 사용자가 투표했는지 여부
+                voted: option.voteHistory.some((vote) => vote.userId === userId), // 현재 사용자가 투표했는지 여부
                 voteHistory: option.voteHistory, // 전체 투표 기록 포함 (선택적)
             })),
         };
@@ -134,84 +133,77 @@ router.get('/posts/:postId', authMiddleware, async (req, res, next) => {
     }
 });
 
-
-
-
-
 // 사용자 투표 처리 API (완)
 router.post('/vote/:postId', authMiddleware, async (req, res) => {
     const { optionId } = req.body;
     const { postId } = req.params;
     const userId = req.user.id;
-  
+
     try {
-      // 투표 및 옵션 존재 여부, 중복 투표 방지, 투표 가능 기간 확인 등의 로직 추가
-      // ..
-      // 선택한 투표(Post)와 옵션(Option)의 유효성 검사
-    const post = await prisma.posts.findUnique({
-        where: { id: parseInt(postId) },
-        include: { options: true },
-      });
-  
-      if (!post) {
-        return res.status(404).json({ message: '투표를 찾을 수 없습니다.' });
-      }
-  
-      const option = post.options.find(o => o.id === parseInt(optionId));
-      if (!option) {
-        return res.status(404).json({ message: '옵션을 찾을 수 없습니다.' });
-      }
-  
-      // 투표 기간 검사
-      const now = new Date();
-      if (now < post.startDate || now > post.endDate) {
-        return res.status(400).json({ message: '투표 기간이 아닙니다.' });
-      }
-  
-      // 중복 투표 검사
-      const voteHistory = await prisma.voteHistory.findFirst({
-        where: {
-          userId,
-          option: {
-            postId: parseInt(postId),
-          },
-        },
-      });
-  
-      if (voteHistory) {
-        return res.status(400).json({ message: '이미 이 투표에 참여하셨습니다.' });
-      }
-  
-      // 투표 기록 및 옵션 count 증가
-      await prisma.$transaction(async (prisma) => {
-        await prisma.voteHistory.create({
-          data: {
-            userId,
-            optionId,
-          },
+        // 투표 및 옵션 존재 여부, 중복 투표 방지, 투표 가능 기간 확인 등의 로직 추가
+        // ..
+        // 선택한 투표(Post)와 옵션(Option)의 유효성 검사
+        const post = await prisma.posts.findUnique({
+            where: { id: parseInt(postId) },
+            include: { options: true },
         });
-  
-        await prisma.options.update({
-          where: { id: optionId },
-          data: { count: { increment: 1 } },
+
+        if (!post) {
+            return res.status(404).json({ message: '투표를 찾을 수 없습니다.' });
+        }
+
+        const option = post.options.find((o) => o.id === parseInt(optionId));
+        if (!option) {
+            return res.status(404).json({ message: '옵션을 찾을 수 없습니다.' });
+        }
+
+        // 투표 기간 검사
+        const now = new Date();
+        if (now < post.startDate || now > post.endDate) {
+            return res.status(400).json({ message: '투표 기간이 아닙니다.' });
+        }
+
+        // 중복 투표 검사
+        const voteHistory = await prisma.voteHistory.findFirst({
+            where: {
+                userId,
+                option: {
+                    postId: parseInt(postId),
+                },
+            },
         });
-      });
-  
-      res.status(201).json({ message: '투표가 성공적으로 완료되었습니다.' });
+
+        if (voteHistory) {
+            return res.status(400).json({ message: '이미 이 투표에 참여하셨습니다.' });
+        }
+
+        // 투표 기록 및 옵션 count 증가
+        await prisma.$transaction(async (prisma) => {
+            await prisma.voteHistory.create({
+                data: {
+                    userId,
+                    optionId,
+                },
+            });
+
+            await prisma.options.update({
+                where: { id: optionId },
+                data: { count: { increment: 1 } },
+            });
+        });
+
+        res.status(201).json({ message: '투표가 성공적으로 완료되었습니다.' });
     } catch (error) {
-      console.error('Error during voting:', error);
-      res.status(500).json({ error: 'Internal server error' });
+        console.error('Error during voting:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
-  });
-
-
-
+});
 
 // 게시글 수정 API
 router.put('/posts/:postId', authMiddleware, async (req, res, next) => {
     try {
         const { postId } = req.params;
-        const { title, content, startDate, endDate, multiVote, updatedAt } = req.body;
+        const { title, content, startDate, endDate, options } = req.body;
         if (!postId || !title || !content) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
 
         const formattedStartDate = new Date(startDate).toISOString();
@@ -226,8 +218,14 @@ router.put('/posts/:postId', authMiddleware, async (req, res, next) => {
                 content: content,
                 startDate: formattedStartDate,
                 endDate: formattedEndDate,
-                multiVote: multiVote,
-                updatedAt: updatedAt,
+                // multiVote: multiVote,
+                // updatedAt: updatedAt,
+                // option 추가
+                options: {
+                    update: options.map((option) => ({
+                        content: option.content,
+                    })),
+                },
             },
             where: { id: +postId },
         });
