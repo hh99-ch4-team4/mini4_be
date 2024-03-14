@@ -14,10 +14,10 @@ datasource db {
 }
 
 model Users {
-  id       Int    @id     @default(autoincrement()) @map("id")
-  email    String @unique @map("email")
-  nickname String @map("nickname")
-  password String @map("password")
+  id          Int    @id     @default(autoincrement()) @map("id")
+  userName    String @unique @map("email")
+  nickname    String @map("nickname")
+  password    String @map("password")
   
   posts       Posts[]
   comments    Comments[]
@@ -55,7 +55,6 @@ model Options{
   postId       Int      @map("postId")
   post         Posts    @relation(fields:[postId], references: [id], onDelete: Cascade)
   
-  post         Posts       @relation(fields:[postId], references: [id], onDelete: Cascade)
 
   voteHistory VoteHistory []
 

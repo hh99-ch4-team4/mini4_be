@@ -9,24 +9,24 @@ router.post('/posts', authMiddleware, async (req, res, next) => {
     const { title, content, startDate, endDate, multiVote, options } = req.body;
     const { id: userId } = req.user;
 
-try {
-    // 게시물(투표)과 옵션을 데이터베이스에 생성
-    const newPost = await prisma.posts.create({
-      data: {
-        title,
-        content,
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
-        multiVote,
-        userId,
-        options: {
-          create: options.map(option => ({  /////////////////////
-            content: option.content,// 초기 투표 수는 0으로 설정
-          }))
-        }
-      },
-      include: { options: true } // 생성된 옵션 정보도 함께 반환
-    });
+    try {
+        // 게시물(투표)과 옵션을 데이터베이스에 생성
+        const newPost = await prisma.posts.create({
+            data: {
+                title,
+                content,
+                startDate: new Date(startDate),
+                endDate: new Date(endDate),
+                multiVote,
+                userId,
+                options: {
+                    create: options.map((option) => ({
+                        content: option.content, // 초기 투표 수는 0으로 설정
+                    })),
+                },
+            },
+            include: { options: true }, // 생성된 옵션 정보도 함께 반환
+        });
 
         // 생성된 게시물 데이터를 프론트엔드로 응답
         res.status(201).json(newPost);
