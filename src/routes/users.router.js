@@ -7,10 +7,10 @@ const router = express.Router();
 
 // 회원가입 API
 router.post('/sign-up', async (req, res, next) => {
-    const { error, value } = signUpSchema.validate(req.body, { abortEarly: true });
+    const { error, value } = signUpSchema.validate(req.body, { abortEarly: false });
     if (error) {
         const errorMessage = error.details.map(detail => {
-            switch (detail.context.key) {
+            switch (detail.path[0]) {
                 case 'email':
                     return '이메일 형식이 올바르지 않습니다.';
                 case 'nickname':
