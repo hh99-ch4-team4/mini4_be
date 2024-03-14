@@ -5,7 +5,6 @@ import commentsRouter from './routes/comments.router.js';
 import likesRouter from './routes/likes.router.js';
 import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
-import { createProxyMiddleware } from 'http-proxy-middleware';
 
 const app = express();
 const PORT = 3000;
