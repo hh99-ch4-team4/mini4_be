@@ -64,37 +64,34 @@ router.post('/sign-up', async (req, res, next) => {
     return res.status(201).json({ user });
 });
 
-
 // 로그인 API
-
 router.post('/log-in', async (req, res, next) => {
     try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-        return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다' });
-    }
-    const user = await prisma.users.findFirst({
-        where: { email },
-    });
-    if (!user) {
-        return res.status(400).json({ message: '존재하지 않는 이메일입니다' });
-    }
-    if (!(await bcrypt.compare(password, user.password))) {
-        return res.status(401).json({ message: '비밀번호가 올바르지 않습니다' });
-    }
+        const { email, password } = req.body;
+        if (!email || !password) {
+            return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다' });
+        }
+        const user = await prisma.users.findFirst({
+            where: { email },
+        });
+        if (!user) {
+            return res.status(400).json({ message: '존재하지 않는 이메일입니다' });
+        }
+        if (!(await bcrypt.compare(password, user.password))) {
+            return res.status(401).json({ message: '비밀번호가 올바르지 않습니다' });
+        }
 
         // 토큰 생성
         const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '38m' });
         const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
 
         // 리프레시 토큰을 쿠키에 설정
-    res.cookie('refreshToken', `Bearer ${refreshToken}`);
-    res.cookie('accessToken', `Bearer ${accessToken}`);
+        res.cookie('refreshToken', `Bearer ${refreshToken}`);
 
-
-        return res.status(200).json({ 
+        return res.status(200).json({
             message: '로그인에 성공하였습니다',
-            accessToken: `Bearer ${accessToken}` });
+            accessToken: `Bearer ${accessToken}`,
+        });
     } catch (error) {
         next(error);
     }
