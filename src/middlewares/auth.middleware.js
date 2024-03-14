@@ -14,7 +14,6 @@ export default async function (req, res, next) {
 
         // 엑세스 토큰을 확인하고 사용자 ID를 추출
         let decodedAccessToken;
-        let decodedRefreshToken;
         try {
             // JWT를 사용하여 서버에서 발급한 토큰이 유효한지 검증
             decodedAccessToken = jwt.verify(accessTokenPayload, process.env.ACCESS_TOKEN_SECRET);

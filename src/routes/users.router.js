@@ -84,14 +84,15 @@ router.post('/log-in', async (req, res, next) => {
     }
 
         // 토큰 생성
-        const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10s' });
+        const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '38m' });
         const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
 
         // 리프레시 토큰을 쿠키에 설정
-    res.cookie('accessToken', `Bearer ${accessToken}`);
     res.cookie('refreshToken', `Bearer ${refreshToken}`);
 
-        return res.status(200).json({ message: '로그인에 성공하였습니다' });
+        return res.status(200).json({ 
+            message: '로그인에 성공하였습니다',
+            accessToken: `Bearer ${accessToken}` });
     } catch (error) {
         next(error);
     }
