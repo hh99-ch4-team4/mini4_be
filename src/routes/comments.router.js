@@ -48,7 +48,7 @@ router.get('/posts/:postId/comments', async (req, res, next) => {
         console.error(error);
         // next(error);
     }
-});
+}); 
 
 // 댓글 수정
 router.put('/posts/:postId/comments/:commentId', authMiddleware, async (req, res, next) => {
