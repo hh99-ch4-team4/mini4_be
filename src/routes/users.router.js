@@ -65,7 +65,6 @@ router.post('/sign-up', async (req, res, next) => {
 });
 
 // 로그인 API
-
 router.post('/log-in', async (req, res, next) => {
     try {
         const { email, password } = req.body;
@@ -89,7 +88,6 @@ router.post('/log-in', async (req, res, next) => {
         // 리프레시 토큰을 쿠키에 설정
         res.cookie('refreshToken', `Bearer ${refreshToken}`);
 
-        //res.cookie('accessToken', `Bearer ${accessToken}`);
         res.cookie('accessToken', `Bearer ${accessToken}`);
 
         return res.status(200).json({
