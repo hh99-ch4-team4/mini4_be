@@ -30,7 +30,7 @@ const formatDate = (date) => {
 // 투표 등록 API (완)
 router.post('/posts', authMiddleware, async (req, res, next) => {
     const { title, content, startDate, endDate, options } = req.body;
-    const userId  = res.locals.user.id;
+    const userId = res.locals.user.id;
     //console.log({ id: userId })
 
     try {
@@ -68,7 +68,7 @@ router.post('/posts', authMiddleware, async (req, res, next) => {
             id: newPost.id,
             title: newPost.title,
             content: newPost.content,
-            updatedAt:newPost.updatedAt,
+            updatedAt: newPost.updatedAt,
             createdAt: formatDate(newPost.createdAt),
             startDate: formatDate(new Date(startDate)),
             endDate: formatDate(new Date(endDate)),
@@ -213,7 +213,6 @@ router.post('/vote/:postId', authMiddleware, async (req, res) => {
                 },
             });
 
-
             await prisma.options.update({
                 where: { id: optionId },
                 data: { count: { increment: 1 } },
@@ -261,23 +260,25 @@ router.patch('/posts/:postId', authMiddleware, async (req, res, next) => {
             });
 
             // 옵션 업데이트 및 추가
-            const updatedOptions = await Promise.all(options.map(async (option) => {
-                if (option.id) {
-                    // 기존 옵션 업데이트
-                    return prisma.options.update({
-                        where: { id: option.id },
-                        data: { content: option.content },
-                    });
-                } else {
-                    // 새 옵션 추가
-                    return prisma.options.create({
-                        data: {
-                            content: option.content,
-                            postId: +postId,
-                        },
-                    });
-                }
-            }));
+            const updatedOptions = await Promise.all(
+                options.map(async (option) => {
+                    if (option.id) {
+                        // 기존 옵션 업데이트
+                        return prisma.options.update({
+                            where: { id: option.id },
+                            data: { content: option.content },
+                        });
+                    } else {
+                        // 새 옵션 추가
+                        return prisma.options.create({
+                            data: {
+                                content: option.content,
+                                postId: +postId,
+                            },
+                        });
+                    }
+                })
+            );
 
             return { updatedPost, updatedOptions };
         });
@@ -300,12 +301,12 @@ router.delete('/posts/:postId', authMiddleware, async (req, res, next) => {
 
         if (!postId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
 
-        const post = await prisma.posts.findFirst({ where: { id: +postId} });
-        if (!post) {return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
-    }   else if(post.userId !== +userId){
-        return res.status(403).json({message : '게시글을 삭제할 권한이 없습니다.'})
-    }
-
+        const post = await prisma.posts.findFirst({ where: { id: +postId } });
+        if (!post) {
+            return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
+        } else if (post.userId !== +userId) {
+            return res.status(403).json({ message: '게시글을 삭제할 권한이 없습니다.' });
+        }
 
         await prisma.posts.delete({ where: { id: +postId } });
 

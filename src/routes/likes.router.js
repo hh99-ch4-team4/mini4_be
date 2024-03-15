@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/posts/:postId/likes', authMiddleware, async (req, res, next) => {
     try {
         const { postId } = req.params;
-        const userId = req.user.id;
+        const userId = res.locals.user.id;
 
         if (!postId || !userId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
 

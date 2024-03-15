@@ -9,7 +9,7 @@ router.post('/posts/:postId/comments', authMiddleware, async (req, res, next) =>
     try {
         const { postId } = req.params;
         const { content } = req.body;
-        const userId = req.user.id;
+        const userId = res.locals.user.id;
 
         if (!postId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
 
@@ -55,7 +55,7 @@ router.put('/posts/:postId/comments/:commentId', authMiddleware, async (req, res
     try {
         const { postId, commentId } = req.params;
         const { content } = req.body;
-        const userId = req.user.id;
+        const userId = res.locals.user.id;
 
         if (!postId || !commentId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
 
@@ -82,7 +82,7 @@ router.put('/posts/:postId/comments/:commentId', authMiddleware, async (req, res
 router.delete('/posts/:postId/comments/:commentId', authMiddleware, async (req, res, next) => {
     try {
         const { postId, commentId } = req.params;
-        const userId = req.user.id;
+        const userId = res.locals.user.id;
 
         if (!postId || !commentId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
 
