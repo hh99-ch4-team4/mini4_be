@@ -289,8 +289,12 @@ router.delete('/posts/:postId', authMiddleware, async (req, res, next) => {
 
         if (!postId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
 
-        const post = await prisma.posts.findFirst({ where: { id: +postId } });
-        if (!post) return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
+        const post = await prisma.posts.findFirst({ where: { id: +postId} });
+        if (!post) {return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
+    }   else if(post.userId !== +userId){
+        return res.status(403).json({message : '게시글을 삭제할 권한이 없습니다.'})
+    }
+
 
         await prisma.posts.delete({ where: { id: +postId } });
 
