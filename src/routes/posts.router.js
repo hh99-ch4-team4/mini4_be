@@ -211,6 +211,7 @@ router.post('/vote/:postId', authMiddleware, async (req, res) => {
                 },
             });
 
+
             await prisma.options.update({
                 where: { id: optionId },
                 data: { count: { increment: 1 } },
