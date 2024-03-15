@@ -6,7 +6,7 @@ export default async function (req, res, next) {
         // 1. 클라이언트로부터 헤더의 액세스토큰을 전달 받는다
         const { authorization } = req.headers;
 
-        // 쿠키가 존재하지 않으면, 인증된 사용자가 아님
+        // 헤더가 존재하지 않으면, 인증된 사용자가 아님
         if (!authorization) return res.status(401).json({ message: '로그인이 필요한 서비스입니다' });
 
         // 인증 정보가 있는 경우, 엑세스 토큰 추출
