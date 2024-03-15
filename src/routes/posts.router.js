@@ -5,27 +5,27 @@ import authMiddleware from '../middlewares/auth.middleware.js';
 const router = express.Router();
 
 // 날짜를 'YYYY-MM-DD' 형식으로 변환
-const formatDate = (date) => {
-    // 'date'가 Date 인스턴스이며 유효한 날짜인지 확인
-    if (date instanceof Date && !isNaN(date)) {
-        return date.toISOString().split('T')[0];
-    } else {
-        try {
-            // 'date'로부터 Date 객체를 생성하고 유효성 검사
-            const parsedDate = new Date(date);
-            if (!isNaN(parsedDate)) {
-                return parsedDate.toISOString().split('T')[0];
-            } else {
-                throw new Error('유효하지 않은 날짜');
-            }
-        } catch (error) {
-            console.error('formatDate 오류:', error);
-            // 유효하지 않은 날짜 입력 처리
-            // 예를 들어, null을 반환하거나 기본 날짜 문자열을 반환
-            return null;
-        }
-    }
-};
+// //const formatDate = (date) => {
+//     // 'date'가 Date 인스턴스이며 유효한 날짜인지 확인
+//     if (date instanceof Date && !isNaN(date)) {
+//         return date.toISOString().split('T')[0];
+//     } else {
+//         try {
+//             // 'date'로부터 Date 객체를 생성하고 유효성 검사
+//             const parsedDate = new Date(date);
+//             if (!isNaN(parsedDate)) {
+//                 return parsedDate.toISOString().split('T')[0];
+//             } else {
+//                 throw new Error('유효하지 않은 날짜');
+//             }
+//         } catch (error) {
+//             console.error('formatDate 오류:', error);
+//             // 유효하지 않은 날짜 입력 처리
+//             // 예를 들어, null을 반환하거나 기본 날짜 문자열을 반환
+//             return null;
+//         }
+//     }
+// //};
 
 // 투표 등록 API (완)
 router.post('/posts', authMiddleware, async (req, res, next) => {
@@ -64,19 +64,19 @@ router.post('/posts', authMiddleware, async (req, res, next) => {
             include: { options: true }, // 생성된 옵션 정보도 함께 반환
         });
 
-        const response = {
-            id: newPost.id,
-            title: newPost.title,
-            content: newPost.content,
-            updatedAt: newPost.updatedAt,
-            createdAt: formatDate(newPost.createdAt),
-            startDate: formatDate(new Date(startDate)),
-            endDate: formatDate(new Date(endDate)),
-            userId: newPost.userId,
-            options: newPost.options,
-        };
+        // const response = {
+        //     id: newPost.id,
+        //     title: newPost.title,
+        //     content: newPost.content,
+        //     updatedAt: newPost.updatedAt,
+        //     createdAt: newPost.createdAt,
+        //     startDate: new Date(startDate),
+        //     endDate: new Date(endDate),
+        //     userId: newPost.userId,
+        //     options: newPost.options,
+        // };
 
-        res.status(201).json(response);
+        res.status(201).json(newPost);
     } catch (error) {
         console.error('Error creating post:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -104,8 +104,8 @@ router.get('/posts', async (req, res, next) => {
     const response = postList.map((post) => ({
         id: post.id,
         title: post.title,
-        startDate: formatDate(post.startDate),
-        endDate: formatDate(post.endDate),
+        startDate:post.startDate,
+        endDate:post.endDate,
         //createdAt: formatDate(post.createdAt), // 각 게시물의 createdAt을 변환
         //likeCount: post.likeCount, // 필요하다면 이 부분을 활성화
         //commentsCount: post.commentsCount, // 필요하다면 이 부분을 활성화
@@ -140,7 +140,7 @@ router.get('/posts/:postId', authMiddleware, async (req, res, next) => {
             title: post.title,
             content: post.content,
             createdAt: post.createdAt,
-            updatedAt: null,
+            updatedAt: post.updatedAt,
             startDate: post.startDate,
             endDate: post.endDate,
             user: post.user ? { nickname: post.user.nickname } : null,
