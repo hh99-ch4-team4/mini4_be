@@ -62,8 +62,12 @@ router.put('/posts/:postId/comments/:commentId', authMiddleware, async (req, res
         const post = await prisma.posts.findFirst({ where: { id: +postId } });
         if (!post) return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
 
-        const existingComment = await prisma.comments.findFirst({ where: { id: +commentId, userId: +userId } });
-        if (!existingComment) return res.status(404).json({ message: '댓글이 존재하지 않거나 수정 권한이 없습니다.' });
+        const existingComment = await prisma.comments.findFirst({ where: { id: +commentId } });
+        if (!existingComment) {
+            return res.status(404).json({ message: '댓글이 존재하지 않습니다.' });
+        } else if (existingComment.userId !== userId) {
+            return res.status(403).json({ message: '댓글 수정 권한이 없습니다.' });
+        }
 
         if (!content) return res.status(400).json({ message: '댓글 내용을 입력해주세요.' });
 
@@ -89,8 +93,12 @@ router.delete('/posts/:postId/comments/:commentId', authMiddleware, async (req, 
         const post = await prisma.posts.findFirst({ where: { id: +postId } });
         if (!post) return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
 
-        const existingComment = await prisma.comments.findFirst({ where: { id: +commentId, userId: +userId } });
-        if (!existingComment) return res.status(404).json({ message: '댓글이 존재하지 않거나 삭제 권한이 없습니다.' });
+        const existingComment = await prisma.comments.findFirst({ where: { id: +commentId } });
+        if (!existingComment) {
+            return res.status(404).json({ message: '댓글이 존재하지 않습니다.' });
+        } else if (existingComment.userId !== userId) {
+            return res.status(403).json({ message: '댓글 삭제 권한이 없습니다.' });
+        }
 
         await prisma.comments.delete({ where: { id: +commentId, userId: +userId } });
 
