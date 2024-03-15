@@ -243,7 +243,7 @@ router.patch('/posts/:postId', authMiddleware, async (req, res, next) => {
 
             const now = new Date();
             const postStartDate = new Date(post.startDate);
-            if (now < postStartDate) {
+            if (now.getTime() > postStartDate.getTime()) {
                 throw new Error('수정할 수 있는 기간이 아닙니다.');
             }
 
