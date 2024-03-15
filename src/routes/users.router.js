@@ -85,13 +85,14 @@ router.post('/log-in', async (req, res, next) => {
         const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '38m' });
         const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
 
-        // 리프레시 토큰을 쿠키에 설정
-        res.cookie('refreshToken', `Bearer ${refreshToken}`);
-        res.cookie('accessToken', `Bearer ${accessToken}`);
+        // 리프레시 토큰을 쿠키에 설정 >> HTTPS 적용후 쿠키로 바꾸기 
+        // res.cookie('refreshToken', `Bearer ${refreshToken}`);
+        // res.cookie('accessToken', `Bearer ${accessToken}`);
 
         return res.status(200).json({
             message: '로그인에 성공하였습니다',
-            accessToken: `Bearer ${accessToken}`,
+            accessToken: `Bearer ${accessToken}`, 
+            refreshToken: `Bearer ${refreshToken}`
         });
     } catch (error) {
         next(error);
@@ -102,11 +103,11 @@ router.post('/log-in', async (req, res, next) => {
 router.post('/refresh', async (req, res) => {
     const { authorization } = req.headers;
 
-    if (!authorization) return res.status(401).json({ message: '로그인이 필요한 서비스입니다' });
+    if (!authorization) return res.status(401).json({ message: '토큰이 만료되었습니다.' });
 
     // 인증 정보가 있는 경우, 리프레시 토큰을 추출
     const [bearer, refreshToken] = authorization.split(' ');
-    // // 만약 토큰 타입이 Bearer가 아닐때 오류
+    // // 만약 토큰 타입이 Bearer가 아닐때 오류 메세지
     if (bearer !== 'Bearer') return res.status(401).json({ message: '토큰 타입이 Bearer 형식이 아닙니다' });
 
     // 리프레시 토큰을 확인하고 사용자 ID를 추출
@@ -115,18 +116,17 @@ router.post('/refresh', async (req, res) => {
         // JWT를 사용하여 서버에서 발급한 토큰이 유효한지 검증
         decodedRefreshToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
-        // 토큰 생성
-        const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '38m' });
-        const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
+        // 토큰 생성 //user 보내지
+        const accessToken = jwt.sign({ id: decodedRefreshToken.id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '38m' });
+        const newRefreshToken = jwt.sign({ id: decodedRefreshToken.id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
 
-        return res.status(200).json({
+        return res.status(201).json({
             accessToken: `Bearer ${accessToken}`,
-            refreshToken: `Bearer ${refreshToken}`,
+            refreshToken: `Bearer ${newRefreshToken}`,
         });
     } catch (error) {
-        // 리프레시 토큰이 만료된 경우, 리프레시 토큰을 확인하고 새로운 엑세스 토큰을 발급
+        // 리프레시 토큰이 만료된 경우, 로그인 창으로 리다이렉트
         if (error.name === 'TokenExpiredError') {
-            // 에러 띄우기
             // return res.redirect('service.com/login'); // 나중에 frontend 주소로 변경하기
             return res.status(200).json({ message: 'refresh token이 만료되었습니다 = 성공!' });
         } else {
