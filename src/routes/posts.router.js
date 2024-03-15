@@ -292,6 +292,7 @@ router.patch('/posts/:postId', authMiddleware, async (req, res, next) => {
     }
 });
 
+// 투표삭제 API
 router.delete('/posts/:postId', authMiddleware, async (req, res, next) => {
     try {
         const { postId } = req.params;
