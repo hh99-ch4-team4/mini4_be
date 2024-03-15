@@ -235,6 +235,7 @@ router.patch('/posts/:postId', authMiddleware, async (req, res, next) => {
 
         const post = await prisma.posts.findFirst({ where: { id: +postId } });
 
+        // 게시글 수정 시, 시작 날짜 이전까지만 수정 가능하도록 하기
         const now = new Date();
         const postStartDate = new Date(post.startDate);
         if (now > postStartDate) {
