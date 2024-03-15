@@ -140,11 +140,11 @@ router.get('/posts/:postId', authMiddleware, async (req, res, next) => {
             title: post.title,
             content: post.content,
             createdAt: post.createdAt,
-            updatedAt: post.updatedAt,
+            updatedAt:post.updatedAt,
             startDate: post.startDate,
             endDate: post.endDate,
             user: post.user ? { nickname: post.user.nickname } : null,
-            userId: userId,
+            userId: post.userId,
             options: post.options.map((option) => ({
                 id: option.id,
                 content: option.content,
