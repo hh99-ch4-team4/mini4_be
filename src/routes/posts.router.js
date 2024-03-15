@@ -30,7 +30,8 @@ const formatDate = (date) => {
 // 투표 등록 API (완)
 router.post('/posts', authMiddleware, async (req, res, next) => {
     const { title, content, startDate, endDate, options } = req.body;
-    const { id: userId } = res.locals.user;
+    const userId  = res.locals.user.id;
+    //console.log({ id: userId })
 
     try {
         if (
@@ -67,6 +68,7 @@ router.post('/posts', authMiddleware, async (req, res, next) => {
             id: newPost.id,
             title: newPost.title,
             content: newPost.content,
+            updatedAt:newPost.updatedAt,
             createdAt: formatDate(newPost.createdAt),
             startDate: formatDate(new Date(startDate)),
             endDate: formatDate(new Date(endDate)),
@@ -137,10 +139,10 @@ router.get('/posts/:postId', authMiddleware, async (req, res, next) => {
             id: post.id,
             title: post.title,
             content: post.content,
-            createdAt: formatDate(post.createdAt),
-            updatedAt: formatDate(post.updatedAt),
-            startDate: formatDate(post.startDate),
-            endDate: formatDate(post.endDate),
+            createdAt: post.createdAt,
+            updatedAt: null,
+            startDate: post.startDate,
+            endDate: post.endDate,
             user: post.user ? { nickname: post.user.nickname } : null,
             userId: userId,
             options: post.options.map((option) => ({
@@ -229,59 +231,66 @@ router.patch('/posts/:postId', authMiddleware, async (req, res, next) => {
     try {
         const { postId } = req.params;
         const { title, content, startDate, endDate, options } = req.body;
-        const { id: userId } = res.locals.user;
 
         if (!postId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
 
-        const post = await prisma.posts.findFirst({ where: { id: +postId } });
+        const updatedPostWithOptions = await prisma.$transaction(async (prisma) => {
+            const post = await prisma.posts.findFirst({ where: { id: +postId } });
 
-        const now = new Date();
-        const postStartDate = new Date(post.startDate);
-        if (now > postStartDate) {
-            return res.status(400).json({ message: '수정할수 있는 기간이 아닙니다.' });
-        }
-
-        // const catchStartDate = formatDate(startDate);
-        // const catchEndDate = formatDate(endDate);
-
-        if (!post) return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
-
-        const updatedPost = await prisma.posts.update({
-            where: { id: +postId },
-            data: {
-                ...(title && { title }),
-                ...(content && { content }),
-                ...(startDate && { startDate }),
-                ...(endDate && { endDate }),
-                updatedAt: new Date(),
-            },
-        });
-
-        // 기존 옵션들을 삭제
-        await prisma.options.deleteMany({
-            where: { postId: +postId },
-        });
-
-        if (options && Array.isArray(options)) {
-            // 각 옵션을 데이터베이스에 추가
-            for (const option of options) {
-                await prisma.options.create({
-                    data: {
-                        content: option.content,
-                        postId: +postId, // 새로운 옵션을 현재 게시글에 연결
-                    },
-                });
+            if (!post) {
+                throw new Error('존재하지 않는 게시글입니다.');
             }
-        }
 
-        return res.status(200).json(updatedPost, { message: '게시글을 수정하였습니다.' });
+            const now = new Date();
+            const postStartDate = new Date(post.startDate);
+            if (now < postStartDate) {
+                throw new Error('수정할 수 있는 기간이 아닙니다.');
+            }
+
+            // 게시글 업데이트
+            const updatedPost = await prisma.posts.update({
+                where: { id: +postId },
+                data: {
+                    ...(title && { title }),
+                    ...(content && { content }),
+                    ...(startDate && { startDate }),
+                    ...(endDate && { endDate }),
+                    updatedAt: new Date(),
+                },
+            });
+
+            // 옵션 업데이트 및 추가
+            const updatedOptions = await Promise.all(options.map(async (option) => {
+                if (option.id) {
+                    // 기존 옵션 업데이트
+                    return prisma.options.update({
+                        where: { id: option.id },
+                        data: { content: option.content },
+                    });
+                } else {
+                    // 새 옵션 추가
+                    return prisma.options.create({
+                        data: {
+                            content: option.content,
+                            postId: +postId,
+                        },
+                    });
+                }
+            }));
+
+            return { updatedPost, updatedOptions };
+        });
+
+        return res.status(200).json({ ...updatedPostWithOptions, message: '게시글과 옵션이 수정되었습니다.' });
     } catch (error) {
         console.error(error);
+        if (error.message === '존재하지 않는 게시글입니다.' || error.message === '수정할 수 있는 기간이 아닙니다.') {
+            return res.status(400).json({ message: error.message });
+        }
         next(error);
     }
 });
 
-// 게시글 삭제 API
 router.delete('/posts/:postId', authMiddleware, async (req, res, next) => {
     try {
         const { postId } = req.params;
