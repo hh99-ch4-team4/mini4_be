@@ -32,7 +32,7 @@ model Posts {
   title         String    @map("title")
   content       String    @db.Text @map("content")
   createdAt     DateTime  @default(now()) @map("createdAt")
-  updatedAt     DateTime? @updatedAt @map("updatedAt")
+  updatedAt     DateTime?  @map("updatedAt")
   startDate     DateTime  @map("startDate")
   endDate       DateTime  @map("endDate")
   multiVote     Boolean   @default(false) @map("multiVote")
