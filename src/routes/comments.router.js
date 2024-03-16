@@ -1,7 +1,7 @@
 import express from 'express';
 import { prisma } from '../utils/prisma/index.js';
 import authMiddleware from '../middlewares/auth.middleware.js';
-import schemas from '../utils/schemas/postSchema.js';
+import schemas from '../utils/schemas/commentSchema.js';
 
 const [commentSchema, commentDetailSchema] = schemas;
 
@@ -39,12 +39,8 @@ router.post('/posts/:postId/comments', authMiddleware, async (req, res, next) =>
 // 댓글 조회
 router.get('/posts/:postId/comments', async (req, res, next) => {
     try {
-        // 스키마를 사용하여 요청 본문 검증
-        const { error, value } = commentSchema.validate(req.params, { abortEarly: false });
-        if (error) {
-            return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
-        }
-        const { postId } = value;
+        const { postId } = req.params;
+        if (!postId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
 
         const post = await prisma.posts.findFirst({ where: { id: +postId } });
         if (!post) return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
