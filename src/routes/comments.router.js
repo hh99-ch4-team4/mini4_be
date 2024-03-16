@@ -48,13 +48,13 @@ router.get('/posts/:postId/comments', async (req, res, next) => {
         console.error(error);
         // next(error);
     }
-}); 
+});
 
 // 댓글 수정
 router.put('/posts/:postId/comments/:commentId', authMiddleware, async (req, res, next) => {
     try {
         const { postId, commentId } = req.params;
-        const { content } = req.body;
+        const { nickname, content } = req.body;
         const userId = res.locals.user.id;
 
         if (!postId || !commentId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
