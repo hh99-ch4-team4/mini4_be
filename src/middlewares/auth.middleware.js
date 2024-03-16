@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { prisma } from '../utils/prisma/index.js';
 
-export default async function (req, res, next) {
+export default async function authenticateUserMiddleware(req, res, next) {
     try {
         // 1. 클라이언트로부터 헤더의 액세스토큰을 전달 받는다
         const { authorization } = req.headers;
@@ -29,7 +29,7 @@ export default async function (req, res, next) {
         }
 
         const user = await prisma.users.findUnique({
-            where: { id: +decodedAccessToken.id },
+            where: { id: +decodedAccessToken.id, email : decodedAccessToken.email, nickname: decodedAccessToken.nickname},
         });
 
         if (!user) {

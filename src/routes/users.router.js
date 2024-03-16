@@ -41,16 +41,16 @@ router.post('/sign-up', async (req, res, next) => {
         return res.status(409).json({ message: '이미 사용중인 이메일 주소입니다.' });
     }
 
-    // 닉네임 중복 확인
-    const existingUserByNickname = await prisma.users.findFirst({
-        where: {
-            nickname: nickname,
-        },
-    });
+    // // 닉네임 중복 확인
+    // const existingUserByNickname = await prisma.users.findFirst({
+    //     where: {
+    //         nickname: nickname,
+    //     },
+    // });
 
-    if (existingUserByNickname) {
-        return res.status(409).json({ message: '이미 사용중인 닉네임입니다.' });
-    }
+    // if (existingUserByNickname) {
+    //     return res.status(409).json({ message: '이미 사용중인 닉네임입니다.' });
+    // }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.users.create({
@@ -82,8 +82,8 @@ router.post('/log-in', async (req, res, next) => {
         }
 
         // 토큰 생성
-        const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '38m' });
-        const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
+        const accessToken = jwt.sign({ id: user.id, email : user.email, nickname : user.nickname }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '38m' });
+        const refreshToken = jwt.sign({ id: user.id,  email : user.email, nickname : user.nickname}, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
 
         // 리프레시 토큰을 쿠키에 설정
         // : HTTP 프로토콜은 cookie를 사용할 수 없기 때문에 지금은 무의미한 코드.
@@ -100,11 +100,11 @@ router.post('/log-in', async (req, res, next) => {
     }
 });
 
-// 리프레쉬 API
+// Refresh토큰으로 AccessToken 재발급 받기 API
 router.post('/refresh', async (req, res) => {
     const { authorization } = req.headers;
 
-    if (!authorization) return res.status(401).json({ message: '토큰이 만료되었습니다.' });
+    if (!authorization) return res.status(401).json({ message: 'Refresh Token을 전달받지 못했습니다.' });
 
     // 인증 정보가 있는 경우, 리프레시 토큰을 추출
     const [bearer, refreshToken] = authorization.split(' ');
@@ -117,13 +117,9 @@ router.post('/refresh', async (req, res) => {
         // JWT를 사용하여 서버에서 발급한 토큰이 유효한지 검증
         decodedRefreshToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
-        // 토큰 생성
-        const accessToken = jwt.sign({ id: decodedRefreshToken.id }, process.env.ACCESS_TOKEN_SECRET, {
-            expiresIn: '38m',
-        });
-        const newRefreshToken = jwt.sign({ id: decodedRefreshToken.id }, process.env.REFRESH_TOKEN_SECRET, {
-            expiresIn: '1d',
-        });
+        // 토큰 생성 
+        const accessToken = jwt.sign({ id: decodedRefreshToken.id, email : decodedRefreshToken.email, nickname: decodedRefreshToken}, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '38m' });
+        const newRefreshToken = jwt.sign({ id: decodedRefreshToken.id, email : decodedRefreshToken.email, nickname: decodedRefreshToken}, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
 
         return res.status(201).json({
             accessToken: `Bearer ${accessToken}`,
