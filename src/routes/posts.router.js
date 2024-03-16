@@ -56,25 +56,15 @@ router.post('/posts', authMiddleware, async (req, res, next) => {
                 content,
                 startDate: new Date(startDate),
                 endDate: new Date(endDate),
-                user: { //user필드로  user와의 연관관계 설정 -- 추가
-                    connect: { id: userId }, 
-                },
+                userId,
                 options: {
                     create: options.map((option) => ({
                         content: option.content,
                     })),
                 },
             },
-            include: {
-                user: {  // 추가 
-                    select: {
-                        id : true,
-                        nickname: true,
-                        email: true,
-                    },
-                },
-                options: true,
-            }        });
+            include: { options: true }, // 생성된 옵션 정보도 함께 반환
+        });
 
 
         res.status(201).json(newPost);
