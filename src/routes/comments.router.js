@@ -22,7 +22,7 @@ router.post('/posts/:postId/comments', authMiddleware, async (req, res, next) =>
             data: { content: content, postId: +postId, userId: +userId },
         });
 
-        return res.status(200).json(comment);
+        return res.status(201).json(comment);
     } catch (error) {
         console.error(error);
         // next(error);
