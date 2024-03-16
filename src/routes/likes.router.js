@@ -42,7 +42,7 @@ router.post('/posts/:postId/likes', authMiddleware, async (req, res, next) => {
             where: { postId: +postId, likeCheck: true },
         });
 
-        return res.status(200).json({ message: responseMessage, likeCount });
+        return res.status(201).json({ message: responseMessage, likeCount });
     } catch (error) {
         console.error(error);
         // next(error);
