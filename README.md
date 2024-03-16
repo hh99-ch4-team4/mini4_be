@@ -19,7 +19,7 @@ Pick my Pick은 선택의 고뇌에서 해방될 수 있는 현명한 선택을 
 ---
 ## Commit Convention
 | Tag | Description | 
-| :---- | ------: |
+| :---- | ------ |
 | FEAT : | 기능 개발 및 기능 추가 |
 | FIX : | 버그 수정 |
 | DESIGN : | UI 디자인 변경 |
