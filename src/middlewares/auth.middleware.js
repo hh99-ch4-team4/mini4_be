@@ -6,8 +6,8 @@ export default async function (req, res, next) {
         // 1. 클라이언트로부터 헤더의 액세스토큰을 전달 받는다
         const { authorization } = req.headers;
 
-        // 쿠키가 존재하지 않으면, 인증된 사용자가 아님
-        if (!authorization) return res.status(401).json({ message: '로그인이 필요한 서비스입니다' });
+        // 헤더가 존재하지 않으면, 인증된 사용자가 아님
+        if (!authorization) return res.status(401).json({ message: 'Access Token이 존재하지 않습니다.' });
 
         // 인증 정보가 있는 경우, 엑세스 토큰 추출
         const [bearer, accessToken] = authorization.split(' ');
@@ -20,9 +20,8 @@ export default async function (req, res, next) {
             // JWT를 사용하여 서버에서 발급한 토큰이 유효한지 검증
             decodedAccessToken = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
         } catch (error) {
-            // 엑세스 토큰이 만료된 경우, 리프레시 토큰을 확인하고 새로운 엑세스 토큰을 발급
+            // 엑세스 토큰이 만료된 경우 에러 띄우기
             if (error.name === 'TokenExpiredError') {
-                // 에러 띄우기
                 return res.status(401).json({ message: 'Access Token이 만료되었습니다.' });
             } else {
                 throw error;
