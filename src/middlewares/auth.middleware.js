@@ -20,9 +20,8 @@ export default async function authenticateUserMiddleware(req, res, next) {
             // JWT를 사용하여 서버에서 발급한 토큰이 유효한지 검증
             decodedAccessToken = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
         } catch (error) {
-            // 엑세스 토큰이 만료된 경우, 리프레시 토큰을 확인하고 새로운 엑세스 토큰을 발급
+            // 엑세스 토큰이 만료된 경우 에러 띄우기
             if (error.name === 'TokenExpiredError') {
-                // 에러 띄우기
                 return res.status(401).json({ message: 'Access Token이 만료되었습니다.' });
             } else {
                 throw error;

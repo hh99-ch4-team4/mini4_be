@@ -85,14 +85,15 @@ router.post('/log-in', async (req, res, next) => {
         const accessToken = jwt.sign({ id: user.id}, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '38m' });
         const refreshToken = jwt.sign({ id: user.id}, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
 
-        // 리프레시 토큰을 쿠키에 설정 >> HTTPS 적용후 쿠키로 바꾸기 
+        // 리프레시 토큰을 쿠키에 설정
+        // : HTTP 프로토콜은 cookie를 사용할 수 없기 때문에 지금은 무의미한 코드.
         // res.cookie('refreshToken', `Bearer ${refreshToken}`);
         // res.cookie('accessToken', `Bearer ${accessToken}`);
 
         return res.status(200).json({
             message: '로그인에 성공하였습니다',
-            accessToken: `Bearer ${accessToken}`, 
-            refreshToken: `Bearer ${refreshToken}`
+            accessToken: `Bearer ${accessToken}`,
+            refreshToken: `Bearer ${refreshToken}`,
         });
     } catch (error) {
         next(error);
@@ -110,7 +111,7 @@ router.post('/refresh', async (req, res) => {
     // // 만약 토큰 타입이 Bearer가 아닐때 오류 메세지
     if (bearer !== 'Bearer') return res.status(401).json({ message: '토큰 타입이 Bearer 형식이 아닙니다' });
 
-    // 리프레시 토큰을 확인하고 사용자 ID를 추출
+    // 리프레시 토큰을 확인
     let decodedRefreshToken;
     try {
         // JWT를 사용하여 서버에서 발급한 토큰이 유효한지 검증
