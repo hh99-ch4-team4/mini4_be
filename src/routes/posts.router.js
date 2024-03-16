@@ -31,7 +31,6 @@ const router = express.Router();
 router.post('/posts', authMiddleware, async (req, res, next) => {
     const { title, content, startDate, endDate, options } = req.body;
     const userId = res.locals.user.id;
-
     //console.log({ id: userId })
 
     try {
@@ -48,7 +47,6 @@ router.post('/posts', authMiddleware, async (req, res, next) => {
                 message: '필수데이터가 전송 되지 않았습니다.',
             });
         }
-
         // 게시물(투표)과 옵션을 데이터베이스에 생성
         const newPost = await prisma.posts.create({
             data: {
@@ -66,6 +64,17 @@ router.post('/posts', authMiddleware, async (req, res, next) => {
             include: { options: true }, // 생성된 옵션 정보도 함께 반환
         });
 
+        // const response = {
+        //     id: newPost.id,
+        //     title: newPost.title,
+        //     content: newPost.content,
+        //     updatedAt: newPost.updatedAt,
+        //     createdAt: newPost.createdAt,
+        //     startDate: new Date(startDate),
+        //     endDate: new Date(endDate),
+        //     userId: newPost.userId,
+        //     options: newPost.options,
+        // };
 
         res.status(201).json(newPost);
     } catch (error) {
@@ -95,8 +104,8 @@ router.get('/posts', async (req, res, next) => {
     const response = postList.map((post) => ({
         id: post.id,
         title: post.title,
-        startDate: post.startDate,
-        endDate: post.endDate,
+        startDate:post.startDate,
+        endDate:post.endDate,
         //createdAt: formatDate(post.createdAt), // 각 게시물의 createdAt을 변환
         //likeCount: post.likeCount, // 필요하다면 이 부분을 활성화
         //commentsCount: post.commentsCount, // 필요하다면 이 부분을 활성화
@@ -131,7 +140,7 @@ router.get('/posts/:postId', authMiddleware, async (req, res, next) => {
             title: post.title,
             content: post.content,
             createdAt: post.createdAt,
-            updatedAt: post.updatedAt,
+            updatedAt:post.updatedAt,
             startDate: post.startDate,
             endDate: post.endDate,
             user: post.user ? { nickname: post.user.nickname } : null,
@@ -277,8 +286,12 @@ router.patch('/posts/:postId', authMiddleware, async (req, res, next) => {
         return res.status(200).json({ ...updatedPostWithOptions, message: '게시글과 옵션이 수정되었습니다.' });
     } catch (error) {
         console.error(error);
-        if (error.message === '존재하지 않는 게시글입니다.' || error.message === '수정할 수 있는 기간이 아닙니다.') {
-            return res.status(400).json({ message: error.message });
+        if (error.message === '존재하지 않는 게시글입니다.') {
+            return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
+        } 
+        
+        if (error.message === '수정할 수 있는 기간이 아닙니다.') {
+            return res.status(400).json({ message: '수정할 수 있는 기간이 아닙니다.' });
         }
         next(error);
     }
