@@ -41,15 +41,27 @@ router.get('/posts/:postId/comments', async (req, res, next) => {
         const comments = await prisma.comments.findMany({
             where: { postId: +postId },
             orderBy: { createdAt: 'desc' },
+            include: {
+                user: {
+                    select: {
+                        nickname: true, // 사용자 닉네임 포함
+                    },
+                },
+            },
         });
 
-        return res.status(200).json(comments);
+        const commentsWithUser = comments.map((comment) => ({
+            ...comment,
+            nickname: comment.user.nickname, // 닉네임 직접 추가
+            user: undefined, // 기존 user 객체 제거
+        }));
+
+        return res.status(200).json(commentsWithUser);
     } catch (error) {
         console.error(error);
         // next(error);
     }
-}); 
-
+});
 // 댓글 수정
 router.put('/posts/:postId/comments/:commentId', authMiddleware, async (req, res, next) => {
     try {
