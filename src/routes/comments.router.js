@@ -1,17 +1,24 @@
 import express from 'express';
 import { prisma } from '../utils/prisma/index.js';
 import authMiddleware from '../middlewares/auth.middleware.js';
+import schemas from '../utils/schemas/postSchema.js';
+
+const [commentSchema, commentDetailSchema] = schemas;
 
 const router = express.Router();
 
-// 댓글 생성
+// 댓글 작성
 router.post('/posts/:postId/comments', authMiddleware, async (req, res, next) => {
     try {
-        const { postId } = req.params;
-        const { content } = req.body;
         const userId = res.locals.user.id;
+        const { content } = req.body;
 
-        if (!postId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
+        // 스키마를 사용하여 요청 본문 검증
+        const { error, value } = commentSchema.validate(req.params, { abortEarly: false });
+        if (error) {
+            return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
+        }
+        const { postId } = value;
 
         const post = await prisma.posts.findFirst({ where: { id: +postId } });
         if (!post) return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
@@ -32,8 +39,12 @@ router.post('/posts/:postId/comments', authMiddleware, async (req, res, next) =>
 // 댓글 조회
 router.get('/posts/:postId/comments', async (req, res, next) => {
     try {
-        const { postId } = req.params;
-        if (!postId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
+        // 스키마를 사용하여 요청 본문 검증
+        const { error, value } = commentSchema.validate(req.params, { abortEarly: false });
+        if (error) {
+            return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
+        }
+        const { postId } = value;
 
         const post = await prisma.posts.findFirst({ where: { id: +postId } });
         if (!post) return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
@@ -41,9 +52,22 @@ router.get('/posts/:postId/comments', async (req, res, next) => {
         const comments = await prisma.comments.findMany({
             where: { postId: +postId },
             orderBy: { createdAt: 'desc' },
+            include: {
+                user: {
+                    select: {
+                        nickname: true, // 사용자 닉네임 포함
+                    },
+                },
+            },
         });
 
-        return res.status(200).json(comments);
+        const commentsWithUser = comments.map((comment) => ({
+            ...comment,
+            nickname: comment.user.nickname, // 닉네임 직접 추가
+            user: undefined, // 기존 user 객체 제거
+        }));
+
+        return res.status(200).json(commentsWithUser);
     } catch (error) {
         console.error(error);
         // next(error);
@@ -53,11 +77,15 @@ router.get('/posts/:postId/comments', async (req, res, next) => {
 // 댓글 수정
 router.put('/posts/:postId/comments/:commentId', authMiddleware, async (req, res, next) => {
     try {
-        const { postId, commentId } = req.params;
-        const { nickname, content } = req.body;
+        const { content } = req.body;
         const userId = res.locals.user.id;
 
-        if (!postId || !commentId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
+        // 스키마를 사용하여 요청 본문 검증
+        const { error, value } = commentDetailSchema.validate(req.params, { abortEarly: false });
+        if (error) {
+            return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
+        }
+        const { postId, commentId } = value;
 
         const post = await prisma.posts.findFirst({ where: { id: +postId } });
         if (!post) return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
@@ -85,10 +113,15 @@ router.put('/posts/:postId/comments/:commentId', authMiddleware, async (req, res
 // 댓글 삭제
 router.delete('/posts/:postId/comments/:commentId', authMiddleware, async (req, res, next) => {
     try {
-        const { postId, commentId } = req.params;
+        const { error, value } = commentDetailSchema.validate(req.params, { abortEarly: false });
+        if (error) {
+            return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
+        }
+        const { postId, commentId } = value;
+
         const userId = res.locals.user.id;
 
-        if (!postId || !commentId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
+        // if (!postId || !commentId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
 
         const post = await prisma.posts.findFirst({ where: { id: +postId } });
         if (!post) return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });

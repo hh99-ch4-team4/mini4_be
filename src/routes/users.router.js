@@ -82,8 +82,16 @@ router.post('/log-in', async (req, res, next) => {
         }
 
         // 토큰 생성
-        const accessToken = jwt.sign({ id: user.id, email : user.email, nickname : user.nickname }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '38m' });
-        const refreshToken = jwt.sign({ id: user.id,  email : user.email, nickname : user.nickname}, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
+        const accessToken = jwt.sign(
+            { id: user.id, email: user.email, nickname: user.nickname },
+            process.env.ACCESS_TOKEN_SECRET,
+            { expiresIn: '38m' }
+        );
+        const refreshToken = jwt.sign(
+            { id: user.id, email: user.email, nickname: user.nickname },
+            process.env.REFRESH_TOKEN_SECRET,
+            { expiresIn: '1d' }
+        );
 
         // 리프레시 토큰을 쿠키에 설정
         // : HTTP 프로토콜은 cookie를 사용할 수 없기 때문에 지금은 무의미한 코드.
@@ -117,9 +125,17 @@ router.post('/refresh', async (req, res) => {
         // JWT를 사용하여 서버에서 발급한 토큰이 유효한지 검증
         decodedRefreshToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
-        // 토큰 생성 
-        const accessToken = jwt.sign({ id: decodedRefreshToken.id, email : decodedRefreshToken.email, nickname: decodedRefreshToken}, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '38m' });
-        const newRefreshToken = jwt.sign({ id: decodedRefreshToken.id, email : decodedRefreshToken.email, nickname: decodedRefreshToken}, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
+        // 토큰 생성
+        const accessToken = jwt.sign(
+            { id: decodedRefreshToken.id, email: decodedRefreshToken.email, nickname: decodedRefreshToken },
+            process.env.ACCESS_TOKEN_SECRET,
+            { expiresIn: '38m' }
+        );
+        const newRefreshToken = jwt.sign(
+            { id: decodedRefreshToken.id, email: decodedRefreshToken.email, nickname: decodedRefreshToken },
+            process.env.REFRESH_TOKEN_SECRET,
+            { expiresIn: '1d' }
+        );
 
         return res.status(201).json({
             accessToken: `Bearer ${accessToken}`,

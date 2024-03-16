@@ -1,52 +1,24 @@
 import express from 'express';
 import { prisma } from '../utils/prisma/index.js';
 import authMiddleware from '../middlewares/auth.middleware.js';
+import schemas from '../utils/schemas/postSchema.js';
+
+const [postSchema, postDetailSchema, voteSchema] = schemas;
 
 const router = express.Router();
 
-// 날짜를 'YYYY-MM-DD' 형식으로 변환
-// //const formatDate = (date) => {
-//     // 'date'가 Date 인스턴스이며 유효한 날짜인지 확인
-//     if (date instanceof Date && !isNaN(date)) {
-//         return date.toISOString().split('T')[0];
-//     } else {
-//         try {
-//             // 'date'로부터 Date 객체를 생성하고 유효성 검사
-//             const parsedDate = new Date(date);
-//             if (!isNaN(parsedDate)) {
-//                 return parsedDate.toISOString().split('T')[0];
-//             } else {
-//                 throw new Error('유효하지 않은 날짜');
-//             }
-//         } catch (error) {
-//             console.error('formatDate 오류:', error);
-//             // 유효하지 않은 날짜 입력 처리
-//             // 예를 들어, null을 반환하거나 기본 날짜 문자열을 반환
-//             return null;
-//         }
-//     }
-// //};
-
 // 투표 등록 API (완)
 router.post('/posts', authMiddleware, async (req, res, next) => {
-    const { title, content, startDate, endDate, options } = req.body;
     const userId = res.locals.user.id;
-    //console.log({ id: userId })
+
+    // 스키마를 사용하여 요청 본문 검증
+    const { error, value } = postSchema.validate(req.body, { abortEarly: false });
+    if (error) {
+        return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
+    }
+    const { title, content, startDate, endDate, options } = value;
 
     try {
-        if (
-            !title ||
-            !content ||
-            !startDate ||
-            !endDate ||
-            !Array.isArray(options) ||
-            options.length === 0 ||
-            options.some((option) => !option.content)
-        ) {
-            return res.status(400).json({
-                message: '필수데이터가 전송 되지 않았습니다.',
-            });
-        }
         // 게시물(투표)과 옵션을 데이터베이스에 생성
         const newPost = await prisma.posts.create({
             data: {
@@ -64,18 +36,6 @@ router.post('/posts', authMiddleware, async (req, res, next) => {
             include: { options: true }, // 생성된 옵션 정보도 함께 반환
         });
 
-        // const response = {
-        //     id: newPost.id,
-        //     title: newPost.title,
-        //     content: newPost.content,
-        //     updatedAt: newPost.updatedAt,
-        //     createdAt: newPost.createdAt,
-        //     startDate: new Date(startDate),
-        //     endDate: new Date(endDate),
-        //     userId: newPost.userId,
-        //     options: newPost.options,
-        // };
-
         res.status(201).json(newPost);
     } catch (error) {
         console.error('Error creating post:', error);
@@ -92,9 +52,6 @@ router.get('/posts', async (req, res, next) => {
             title: true,
             startDate: true,
             endDate: true,
-            //createdAt: true,
-            //likeCount: true,
-            //commentsCount: true,
         },
         orderBy: {
             createdAt: 'desc',
@@ -104,19 +61,22 @@ router.get('/posts', async (req, res, next) => {
     const response = postList.map((post) => ({
         id: post.id,
         title: post.title,
-        startDate:post.startDate,
-        endDate:post.endDate,
-        //createdAt: formatDate(post.createdAt), // 각 게시물의 createdAt을 변환
-        //likeCount: post.likeCount, // 필요하다면 이 부분을 활성화
-        //commentsCount: post.commentsCount, // 필요하다면 이 부분을 활성화
+        startDate: post.startDate,
+        endDate: post.endDate,
     }));
     return res.status(200).json(response);
 });
 
 // 투표 상세 조회 API (완)
 router.get('/posts/:postId', authMiddleware, async (req, res, next) => {
-    const { postId } = req.params;
     const { id: userId } = res.locals.user; // 사용자 인증 미들웨어를 통해 얻은 사용자 ID
+
+    // 스키마를 사용하여 요청 본문 검증
+    const { error, value } = postDetailSchema.validate(req.params, { abortEarly: false });
+    if (error) {
+        return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
+    }
+    const { postId } = value;
 
     try {
         const post = await prisma.posts.findUnique({
@@ -140,7 +100,7 @@ router.get('/posts/:postId', authMiddleware, async (req, res, next) => {
             title: post.title,
             content: post.content,
             createdAt: post.createdAt,
-            updatedAt:post.updatedAt,
+            updatedAt: post.updatedAt,
             startDate: post.startDate,
             endDate: post.endDate,
             user: post.user ? { nickname: post.user.nickname } : null,
@@ -162,9 +122,20 @@ router.get('/posts/:postId', authMiddleware, async (req, res, next) => {
 
 // 사용자 투표 처리 API (완)
 router.post('/vote/:postId', authMiddleware, async (req, res) => {
-    const { optionId } = req.body;
-    const { postId } = req.params;
     const { id: userId } = res.locals.user;
+
+    // req.params와 req.body를 병합
+    const validationData = {
+        ...req.params,
+        ...req.body,
+    };
+    // 스키마를 사용하여 병합된 데이터 검증
+    const { error } = voteSchema.validate(validationData, { abortEarly: false });
+    if (error) {
+        return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
+    }
+    // 검증 후의 데이터 사용
+    const { postId, optionId } = validationData;
 
     try {
         // 투표 및 옵션 존재 여부, 중복 투표 방지, 투표 가능 기간 확인 등의 로직 추가
@@ -229,8 +200,14 @@ router.post('/vote/:postId', authMiddleware, async (req, res) => {
 // 투표 수정 API
 router.patch('/posts/:postId', authMiddleware, async (req, res, next) => {
     try {
-        const { postId } = req.params;
         const { title, content, startDate, endDate, options } = req.body;
+
+        // 스키마를 사용하여 요청 본문 검증
+        const { error, value } = postDetailSchema.validate(req.params, { abortEarly: false });
+        if (error) {
+            return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
+        }
+        const { postId } = value;
 
         if (!postId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
 
@@ -288,8 +265,8 @@ router.patch('/posts/:postId', authMiddleware, async (req, res, next) => {
         console.error(error);
         if (error.message === '존재하지 않는 게시글입니다.') {
             return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
-        } 
-        
+        }
+
         if (error.message === '수정할 수 있는 기간이 아닙니다.') {
             return res.status(400).json({ message: '수정할 수 있는 기간이 아닙니다.' });
         }
@@ -300,10 +277,14 @@ router.patch('/posts/:postId', authMiddleware, async (req, res, next) => {
 // 투표삭제 API
 router.delete('/posts/:postId', authMiddleware, async (req, res, next) => {
     try {
-        const { postId } = req.params;
-        const { id: userId } = res.locals.user;
+        // 스키마를 사용하여 요청 본문 검증
+        const { error, value } = postDetailSchema.validate(req.params, { abortEarly: false });
+        if (error) {
+            return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
+        }
+        const { postId } = value;
 
-        if (!postId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
+        const { id: userId } = res.locals.user;
 
         const post = await prisma.posts.findFirst({ where: { id: +postId } });
         if (!post) {
