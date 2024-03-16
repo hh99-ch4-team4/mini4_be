@@ -31,6 +31,7 @@ const router = express.Router();
 router.post('/posts', authMiddleware, async (req, res, next) => {
     const { title, content, startDate, endDate, options } = req.body;
     const userId = res.locals.user.id;
+
     //console.log({ id: userId })
 
     try {
@@ -47,6 +48,7 @@ router.post('/posts', authMiddleware, async (req, res, next) => {
                 message: '필수데이터가 전송 되지 않았습니다.',
             });
         }
+
         // 게시물(투표)과 옵션을 데이터베이스에 생성
         const newPost = await prisma.posts.create({
             data: {
@@ -64,17 +66,6 @@ router.post('/posts', authMiddleware, async (req, res, next) => {
             include: { options: true }, // 생성된 옵션 정보도 함께 반환
         });
 
-        // const response = {
-        //     id: newPost.id,
-        //     title: newPost.title,
-        //     content: newPost.content,
-        //     updatedAt: newPost.updatedAt,
-        //     createdAt: newPost.createdAt,
-        //     startDate: new Date(startDate),
-        //     endDate: new Date(endDate),
-        //     userId: newPost.userId,
-        //     options: newPost.options,
-        // };
 
         res.status(201).json(newPost);
     } catch (error) {
@@ -104,8 +95,8 @@ router.get('/posts', async (req, res, next) => {
     const response = postList.map((post) => ({
         id: post.id,
         title: post.title,
-        startDate:post.startDate,
-        endDate:post.endDate,
+        startDate: post.startDate,
+        endDate: post.endDate,
         //createdAt: formatDate(post.createdAt), // 각 게시물의 createdAt을 변환
         //likeCount: post.likeCount, // 필요하다면 이 부분을 활성화
         //commentsCount: post.commentsCount, // 필요하다면 이 부분을 활성화
@@ -140,7 +131,7 @@ router.get('/posts/:postId', authMiddleware, async (req, res, next) => {
             title: post.title,
             content: post.content,
             createdAt: post.createdAt,
-            updatedAt:post.updatedAt,
+            updatedAt: post.updatedAt,
             startDate: post.startDate,
             endDate: post.endDate,
             user: post.user ? { nickname: post.user.nickname } : null,
