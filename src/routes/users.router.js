@@ -82,8 +82,8 @@ router.post('/log-in', async (req, res, next) => {
         }
 
         // 토큰 생성
-        const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '38m' });
-        const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
+        const accessToken = jwt.sign({ id: user.id}, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '38m' });
+        const refreshToken = jwt.sign({ id: user.id}, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
 
         // 리프레시 토큰을 쿠키에 설정 >> HTTPS 적용후 쿠키로 바꾸기 
         // res.cookie('refreshToken', `Bearer ${refreshToken}`);
@@ -99,11 +99,11 @@ router.post('/log-in', async (req, res, next) => {
     }
 });
 
-// 리프레쉬 API
+// Refresh토큰으로 AccessToken 재발급 받기 API
 router.post('/refresh', async (req, res) => {
     const { authorization } = req.headers;
 
-    if (!authorization) return res.status(401).json({ message: '토큰이 만료되었습니다.' });
+    if (!authorization) return res.status(401).json({ message: 'Refresh Token을 전달받지 못했습니다.' });
 
     // 인증 정보가 있는 경우, 리프레시 토큰을 추출
     const [bearer, refreshToken] = authorization.split(' ');
@@ -116,9 +116,9 @@ router.post('/refresh', async (req, res) => {
         // JWT를 사용하여 서버에서 발급한 토큰이 유효한지 검증
         decodedRefreshToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
-        // 토큰 생성 //user 보내지
-        const accessToken = jwt.sign({ id: decodedRefreshToken.id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '38m' });
-        const newRefreshToken = jwt.sign({ id: decodedRefreshToken.id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
+        // 토큰 생성 
+        const accessToken = jwt.sign({ id: decodedRefreshToken.id}, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '38m' });
+        const newRefreshToken = jwt.sign({ id: decodedRefreshToken.id}, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' });
 
         return res.status(201).json({
             accessToken: `Bearer ${accessToken}`,
