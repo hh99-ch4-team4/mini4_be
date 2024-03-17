@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 // CORS 미들웨어 설정
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, OPTIONS, PUT, POST');
+    res.header('Access-Control-Allow-Methods', 'GET, OPTIONS, PUT, POST, PATCH, DELETE');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.header('Access-Control-Allow-Credentials', 'true');
     next(); // 다음 미들웨어로 넘어가도록 호출합니다.

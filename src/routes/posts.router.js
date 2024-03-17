@@ -5,32 +5,32 @@ import authMiddleware from '../middlewares/auth.middleware.js';
 const router = express.Router();
 
 // 날짜를 'YYYY-MM-DD' 형식으로 변환
-const formatDate = (date) => {
-    // 'date'가 Date 인스턴스이며 유효한 날짜인지 확인
-    if (date instanceof Date && !isNaN(date)) {
-        return date.toISOString().split('T')[0];
-    } else {
-        try {
-            // 'date'로부터 Date 객체를 생성하고 유효성 검사
-            const parsedDate = new Date(date);
-            if (!isNaN(parsedDate)) {
-                return parsedDate.toISOString().split('T')[0];
-            } else {
-                throw new Error('유효하지 않은 날짜');
-            }
-        } catch (error) {
-            console.error('formatDate 오류:', error);
-            // 유효하지 않은 날짜 입력 처리
-            // 예를 들어, null을 반환하거나 기본 날짜 문자열을 반환
-            return null;
-        }
-    }
-};
+// //const formatDate = (date) => {
+//     // 'date'가 Date 인스턴스이며 유효한 날짜인지 확인
+//     if (date instanceof Date && !isNaN(date)) {
+//         return date.toISOString().split('T')[0];
+//     } else {
+//         try {
+//             // 'date'로부터 Date 객체를 생성하고 유효성 검사
+//             const parsedDate = new Date(date);
+//             if (!isNaN(parsedDate)) {
+//                 return parsedDate.toISOString().split('T')[0];
+//             } else {
+//                 throw new Error('유효하지 않은 날짜');
+//             }
+//         } catch (error) {
+//             console.error('formatDate 오류:', error);
+//             // 유효하지 않은 날짜 입력 처리
+//             // 예를 들어, null을 반환하거나 기본 날짜 문자열을 반환
+//             return null;
+//         }
+//     }
+// //};
 
 // 투표 등록 API (완)
 router.post('/posts', authMiddleware, async (req, res, next) => {
     const { title, content, startDate, endDate, options } = req.body;
-    const userId  = res.locals.user.id;
+    const userId = res.locals.user.id;
     //console.log({ id: userId })
 
     try {
@@ -64,19 +64,19 @@ router.post('/posts', authMiddleware, async (req, res, next) => {
             include: { options: true }, // 생성된 옵션 정보도 함께 반환
         });
 
-        const response = {
-            id: newPost.id,
-            title: newPost.title,
-            content: newPost.content,
-            updatedAt:newPost.updatedAt,
-            createdAt: formatDate(newPost.createdAt),
-            startDate: formatDate(new Date(startDate)),
-            endDate: formatDate(new Date(endDate)),
-            userId: newPost.userId,
-            options: newPost.options,
-        };
+        // const response = {
+        //     id: newPost.id,
+        //     title: newPost.title,
+        //     content: newPost.content,
+        //     updatedAt: newPost.updatedAt,
+        //     createdAt: newPost.createdAt,
+        //     startDate: new Date(startDate),
+        //     endDate: new Date(endDate),
+        //     userId: newPost.userId,
+        //     options: newPost.options,
+        // };
 
-        res.status(201).json(response);
+        res.status(201).json(newPost);
     } catch (error) {
         console.error('Error creating post:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -104,8 +104,8 @@ router.get('/posts', async (req, res, next) => {
     const response = postList.map((post) => ({
         id: post.id,
         title: post.title,
-        startDate: formatDate(post.startDate),
-        endDate: formatDate(post.endDate),
+        startDate:post.startDate,
+        endDate:post.endDate,
         //createdAt: formatDate(post.createdAt), // 각 게시물의 createdAt을 변환
         //likeCount: post.likeCount, // 필요하다면 이 부분을 활성화
         //commentsCount: post.commentsCount, // 필요하다면 이 부분을 활성화
@@ -140,11 +140,11 @@ router.get('/posts/:postId', authMiddleware, async (req, res, next) => {
             title: post.title,
             content: post.content,
             createdAt: post.createdAt,
-            updatedAt: null,
+            updatedAt:post.updatedAt,
             startDate: post.startDate,
             endDate: post.endDate,
             user: post.user ? { nickname: post.user.nickname } : null,
-            userId: userId,
+            userId: post.userId,
             options: post.options.map((option) => ({
                 id: option.id,
                 content: option.content,
@@ -213,7 +213,6 @@ router.post('/vote/:postId', authMiddleware, async (req, res) => {
                 },
             });
 
-
             await prisma.options.update({
                 where: { id: optionId },
                 data: { count: { increment: 1 } },
@@ -244,8 +243,7 @@ router.patch('/posts/:postId', authMiddleware, async (req, res, next) => {
 
             const now = new Date();
             const postStartDate = new Date(post.startDate);
-            console.log(now,postStartDate)
-            if (now > postStartDate) {
+            if (now.getTime() > postStartDate.getTime()) {
                 throw new Error('수정할 수 있는 기간이 아닙니다.');
             }
 
@@ -265,23 +263,25 @@ router.patch('/posts/:postId', authMiddleware, async (req, res, next) => {
             });
 
             // 옵션 업데이트 및 추가
-            const updatedOptions = await Promise.all(options.map(async (option) => {
-                if (option.id) {
-                    // 기존 옵션 업데이트
-                    return prisma.options.update({
-                        where: { id: option.id },
-                        data: { content: option.content },
-                    });
-                } else {
-                    // 새 옵션 추가
-                    return prisma.options.create({
-                        data: {
-                            content: option.content,
-                            postId: +postId,
-                        },
-                    });
-                }
-            }));
+            const updatedOptions = await Promise.all(
+                options.map(async (option) => {
+                    if (option.id) {
+                        // 기존 옵션 업데이트
+                        return prisma.options.update({
+                            where: { id: option.id },
+                            data: { content: option.content },
+                        });
+                    } else {
+                        // 새 옵션 추가
+                        return prisma.options.create({
+                            data: {
+                                content: option.content,
+                                postId: +postId,
+                            },
+                        });
+                    }
+                })
+            );
 
             return { updatedPost, updatedOptions };
         });
@@ -289,8 +289,12 @@ router.patch('/posts/:postId', authMiddleware, async (req, res, next) => {
         return res.status(200).json({ ...updatedPostWithOptions, message: '게시글과 옵션이 수정되었습니다.' });
     } catch (error) {
         console.error(error);
-        if (error.message === '존재하지 않는 게시글입니다.' || error.message === '수정할 수 있는 기간이 아닙니다.') {
-            return res.status(400).json({ message: error.message });
+        if (error.message === '존재하지 않는 게시글입니다.') {
+            return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
+        } 
+        
+        if (error.message === '수정할 수 있는 기간이 아닙니다.') {
+            return res.status(400).json({ message: '수정할 수 있는 기간이 아닙니다.' });
         }
         next(error);
     }
@@ -304,12 +308,12 @@ router.delete('/posts/:postId', authMiddleware, async (req, res, next) => {
 
         if (!postId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
 
-        const post = await prisma.posts.findFirst({ where: { id: +postId} });
-        if (!post) {return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
-    }   else if(post.userId !== +userId){
-        return res.status(403).json({message : '게시글을 삭제할 권한이 없습니다.'})
-    }
-
+        const post = await prisma.posts.findFirst({ where: { id: +postId } });
+        if (!post) {
+            return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
+        } else if (post.userId !== +userId) {
+            return res.status(403).json({ message: '게시글을 삭제할 권한이 없습니다.' });
+        }
 
         await prisma.posts.delete({ where: { id: +postId } });
 
