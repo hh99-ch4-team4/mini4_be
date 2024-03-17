@@ -261,13 +261,7 @@ router.patch('/posts/:postId', authMiddleware, async (req, res, next) => {
 
             // 투표항목 옵션 지우기
             await prisma.options.deleteMany({
-                where: { postId: +postId },
-                data: {
-                    id,
-                    content,
-                    count,
-                    postId
-    }
+                postId: +postId
             });
 
             // 옵션 다시 생성
