@@ -247,9 +247,6 @@ router.patch('/posts/:postId', authMiddleware, async (req, res, next) => {
                 throw new Error('수정할 수 있는 기간이 아닙니다.');
             }
 
-            //const bodyStartDate = new Date(startDate)
-            
-
             // 게시글 업데이트
             const updatedPost = await prisma.posts.update({
                 where: { id: +postId },
@@ -262,43 +259,38 @@ router.patch('/posts/:postId', authMiddleware, async (req, res, next) => {
                 },
             });
 
-            // 옵션 업데이트 및 추가
-            const updatedOptions = await Promise.all(
-                options.map(async (option) => {
-                    if (option.id) {
-                        // 기존 옵션 업데이트
-                        return prisma.options.update({
-                            where: { id: option.id },
-                            data: { content: option.content },
-                        });
-                    } else {
-                        // 새 옵션 추가
-                        return prisma.options.create({
-                            data: {
-                                content: option.content,
-                                postId: +postId,
-                            },
-                        });
-                    }
-                })
-            );
+            // 투표항목 옵션 지우기
+            await prisma.options.deleteMany({
+                where: { postId: +postId },
+            });
 
-            return { updatedPost, updatedOptions };
+            // 옵션 다시 생성
+            const newOptions = await Promise.all(options.map(option => 
+                prisma.options.create({
+                    data: {
+                        content: option.content,
+                        postId: +postId,
+                    },
+                })
+            ));
+
+            return { updatedPost, newOptions };
         });
 
         return res.status(200).json({ ...updatedPostWithOptions, message: '게시글과 옵션이 수정되었습니다.' });
     } catch (error) {
         console.error(error);
         if (error.message === '존재하지 않는 게시글입니다.') {
-            return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
+            return res.status(404).json({ message: error.message });
         } 
         
         if (error.message === '수정할 수 있는 기간이 아닙니다.') {
-            return res.status(400).json({ message: '수정할 수 있는 기간이 아닙니다.' });
+            return res.status(400).json({ message: error.message });
         }
         next(error);
     }
 });
+
 
 // 투표삭제 API
 router.delete('/posts/:postId', authMiddleware, async (req, res, next) => {
