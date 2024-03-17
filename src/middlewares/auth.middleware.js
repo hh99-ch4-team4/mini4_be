@@ -29,7 +29,11 @@ export default async function authenticateUserMiddleware(req, res, next) {
         }
 
         const user = await prisma.users.findUnique({
-            where: { id: +decodedAccessToken.id, email : decodedAccessToken.email, nickname: decodedAccessToken.nickname},
+            where: {
+                id: +decodedAccessToken.id,
+                email: decodedAccessToken.email,
+                nickname: decodedAccessToken.nickname,
+            },
         });
 
         if (!user) {

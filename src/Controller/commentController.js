@@ -21,7 +21,7 @@ export const createCommentController = async (req, res, next) => {
         res.status(201).json(comment);
     } catch (error) {
         console.error(error);
-        // next(error);
+        next(error);
     }
 };
 
@@ -40,7 +40,7 @@ export const readCommentController = async (req, res, next) => {
         res.status(200).json(comment);
     } catch (error) {
         console.error(error);
-        // next(error);
+        next(error);
     }
 };
 
@@ -62,7 +62,7 @@ export const updateCommentController = async (req, res, next) => {
         res.status(200).json(comment);
     } catch (error) {
         console.error(error);
-        // next(error);
+        next(error);
     }
 };
 
@@ -83,6 +83,6 @@ export const deleteCommentController = async (req, res, next) => {
         res.status(200).json({ message: '댓글을 삭제하였습니다.' });
     } catch (error) {
         console.error(error);
-        // next(error);
+        next(error);
     }
 };
