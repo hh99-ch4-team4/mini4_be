@@ -244,9 +244,13 @@ router.patch('/posts/:postId', authMiddleware, async (req, res, next) => {
 
             const now = new Date();
             const postStartDate = new Date(post.startDate);
-            if (now < postStartDate) {
+            console.log(now,postStartDate)
+            if (now > postStartDate) {
                 throw new Error('수정할 수 있는 기간이 아닙니다.');
             }
+
+            //const bodyStartDate = new Date(startDate)
+            
 
             // 게시글 업데이트
             const updatedPost = await prisma.posts.update({
@@ -254,8 +258,8 @@ router.patch('/posts/:postId', authMiddleware, async (req, res, next) => {
                 data: {
                     ...(title && { title }),
                     ...(content && { content }),
-                    ...(startDate && { startDate }),
-                    ...(endDate && { endDate }),
+                    ...(startDate && { startDate: new Date(startDate) }),
+                    ...(endDate && { endDate: new Date(endDate) }),
                     updatedAt: new Date(),
                 },
             });
