@@ -234,62 +234,121 @@ router.patch('/posts/:postId', authMiddleware, async (req, res, next) => {
 
         if (!postId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
 
-        const updatedPostWithOptions = await prisma.$transaction(async (prisma) => {
-            const post = await prisma.posts.findFirst({ where: { id: +postId } });
+        const post = await prisma.posts.findFirst({ where: { id: +postId } });
 
-            if (!post) {
-                throw new Error('존재하지 않는 게시글입니다.');
-            }
+        if (!post) {
+            return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
+        }
 
-            const now = new Date();
-            const postStartDate = new Date(post.startDate);
-            if (now.getTime() > postStartDate.getTime()) {
-                throw new Error('수정할 수 있는 기간이 아닙니다.');
-            }
+        const now = new Date();
+        const postStartDate = new Date(post.startDate);
+        if (now.getTime() > postStartDate.getTime()) {
+            return res.status(400).json({ message: '수정할 수 있는 기간이 아닙니다.' });
+        }
 
-            // 게시글 업데이트
-            const updatedPost = await prisma.posts.update({
-                where: { id: +postId },
-                data: {
-                    ...(title && { title }),
-                    ...(content && { content }),
-                    ...(startDate && { startDate: new Date(startDate) }),
-                    ...(endDate && { endDate: new Date(endDate) }),
-                    updatedAt: new Date(),
-                },
-            });
-
-            // 투표항목 옵션 지우기
-            await prisma.options.deleteMany({
-                postId: +postId
-            });
-
-            // 옵션 다시 생성
-            const newOptions = await Promise.all(options.map(option => 
-                prisma.options.create({
-                    data: {
-                        content: option.content,
-                        postId: +postId,
-                    },
-                })
-            ));
-
-            return { updatedPost, newOptions };
+        // 게시글 업데이트
+        const updatedPost = await prisma.posts.update({
+            where: { id: +postId },
+            data: {
+                ...(title && { title }),
+                ...(content && { content }),
+                ...(startDate && { startDate: new Date(startDate) }),
+                ...(endDate && { endDate: new Date(endDate) }),
+                updatedAt: new Date(),
+            },
         });
 
-        return res.status(200).json({ ...updatedPostWithOptions, message: '게시글과 옵션이 수정되었습니다.' });
+        // 투표항목 옵션 지우기
+        await prisma.options.deleteMany({
+            where: {
+                postId: +postId,
+            }
+        });
+
+        // 옵션 다시 생성
+        const newOptions = await Promise.all(options.map(option =>
+            prisma.options.create({
+                data: {
+                    content: option.content,
+                    postId: +postId,
+                },
+            })
+        ));
+
+        return res.status(200).json({ message: '게시글과 옵션이 수정되었습니다.' });
     } catch (error) {
         console.error(error);
-        if (error.message === '존재하지 않는 게시글입니다.') {
+        if (error.message === '존재하지 않는 게시글입니다.' || error.message === '수정할 수 있는 기간이 아닙니다.') {
             return res.status(404).json({ message: error.message });
-        } 
-        
-        if (error.message === '수정할 수 있는 기간이 아닙니다.') {
-            return res.status(400).json({ message: error.message });
         }
         next(error);
     }
 });
+
+// router.patch('/posts/:postId', authMiddleware, async (req, res, next) => {
+//     try {
+//         const { postId } = req.params;
+//         const { title, content, startDate, endDate, options } = req.body;
+
+//         if (!postId) return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
+
+//         const updatedPostWithOptions = await prisma.$transaction(async (prisma) => {
+//             const post = await prisma.posts.findFirst({ where: { id: +postId } });
+
+//             if (!post) {
+//                 throw new Error('존재하지 않는 게시글입니다.');
+//             }
+
+//             const now = new Date();
+//             const postStartDate = new Date(post.startDate);
+//             if (now.getTime() > postStartDate.getTime()) {
+//                 throw new Error('수정할 수 있는 기간이 아닙니다.');
+//             }
+
+//             // 게시글 업데이트
+//             const updatedPost = await prisma.posts.update({
+//                 where: { id: +postId },
+//                 data: {
+//                     ...(title && { title }),
+//                     ...(content && { content }),
+//                     ...(startDate && { startDate: new Date(startDate) }),
+//                     ...(endDate && { endDate: new Date(endDate) }),
+//                     updatedAt: new Date(),
+//                 },
+//             });
+
+//             // 투표항목 옵션 지우기
+//             const deleteOn = await prisma.options.deleteMany({
+//                 where: {
+//                     postId: +postId, // postId를 숫자로 변환하여 정확히 지정
+//                 }
+//             });
+//             // 옵션 다시 생성
+//             const newOptions = await Promise.all(options.map(option => 
+//                 prisma.options.create({
+//                     data: {
+//                         content: option.content,
+//                         postId: +postId,
+//                     },
+//                 })
+//             ));
+
+//             return { updatedPost, newOptions };
+//         });
+
+//         return res.status(200).json({message: '게시글과 옵션이 수정되었습니다.' });
+//     } catch (error) {
+//         console.error(error);
+//         if (error.message === '존재하지 않는 게시글입니다.') {
+//             return res.status(404).json({ message: error.message });
+//         } 
+        
+//         if (error.message === '수정할 수 있는 기간이 아닙니다.') {
+//             return res.status(400).json({ message: error.message });
+//         }
+//         next(error);
+//     }
+// });
 
 
 // 투표삭제 API
