@@ -12,13 +12,16 @@ export const like = async ({ postId, userId }) => {
 
     let responseMessage = '';
     if (like) {
+        // 좋아요를 처음 누른게 아닌데 또 좋아요를 누르는 상황이라면, 좋아요 값을 전환하여 반환
         await LikeRepository.toggleLike(like.id, !like.likeCheck);
         responseMessage = !like.likeCheck ? '좋아요를 등록했습니다' : '좋아요를 취소했습니다.';
     } else {
+        // 좋아요를 처음 누른다면, 좋아요 등록.
         await LikeRepository.createLike({ postId, userId });
         responseMessage = '좋아요를 등록했습니다.';
     }
 
+    // 좋아요 개수 세기
     const likeCount = await LikeRepository.countLikes(postId);
 
     return { message: responseMessage, likeCount };

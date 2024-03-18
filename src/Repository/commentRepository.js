@@ -1,5 +1,12 @@
 import { prisma } from '../utils/prisma/index.js'; // prisma 인스턴스 임포트
 
+// 댓글이 작성된 게시글 찾기
+export const checkPostExists = async ({ id }) => {
+    const post = await prisma.posts.findFirst({ where: { id } });
+
+    return Boolean(post);
+};
+
 // 댓글 작성
 export const createComment = async ({ postId, userId, content }) => {
     return await prisma.comments.create({
@@ -16,6 +23,11 @@ export const readComment = async ({ postId }) => {
             user: { select: { nickname: true } },
         },
     });
+};
+
+// 이미 작성된 댓글 찾기
+export const checkCommentExists = async ({ id }) => {
+    return await prisma.comments.findFirst({ where: { id } });
 };
 
 // 댓글 수정
