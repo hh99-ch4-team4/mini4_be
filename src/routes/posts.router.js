@@ -4,68 +4,71 @@ import authMiddleware from '../middlewares/auth.middleware.js';
 import schemas from '../utils/schemas/postSchema.js';
 
 const [postSchema, postDetailSchema, voteSchema] = schemas;
+import {createPostController, getAllPostsController} from '../Controller/postController.js';
 
 const router = express.Router();
 
 // 투표 등록 API (완)
-router.post('/posts', authMiddleware, async (req, res, next) => {
-    const userId = res.locals.user.id;
+router.post('/posts', authMiddleware,createPostController)
+//  async (req, res, next) => {
+//     const userId = res.locals.user.id;
 
-    // 스키마를 사용하여 요청 본문 검증
-    const { error, value } = postSchema.validate(req.body, { abortEarly: false });
-    if (error) {
-        return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
-    }
-    const { title, content, startDate, endDate, options } = value;
+//     // 스키마를 사용하여 요청 본문 검증
+//     const { error, value } = postSchema.validate(req.body, { abortEarly: false });
+//     if (error) {
+//         return res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
+//     }
+//     const { title, content, startDate, endDate, options } = value;
 
-    try {
-        // 게시물(투표)과 옵션을 데이터베이스에 생성
-        const newPost = await prisma.posts.create({
-            data: {
-                title,
-                content,
-                startDate: new Date(startDate),
-                endDate: new Date(endDate),
-                userId,
-                options: {
-                    create: options.map((option) => ({
-                        content: option.content,
-                    })),
-                },
-            },
-            include: { options: true }, // 생성된 옵션 정보도 함께 반환
-        });
+//     try {
+//         // 게시물(투표)과 옵션을 데이터베이스에 생성
+//         const newPost = await prisma.posts.create({
+//             data: {
+//                 title,
+//                 content,
+//                 startDate: new Date(startDate),
+//                 endDate: new Date(endDate),
+//                 userId,
+//                 options: {
+//                     create: options.map((option) => ({
+//                         content: option.content,
+//                     })),
+//                 },
+//             },
+//             include: { options: true }, // 생성된 옵션 정보도 함께 반환
+//         });
 
-        res.status(201).json(newPost);
-    } catch (error) {
-        console.error('Error creating post:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
+//         res.status(201).json(newPost);
+//     } catch (error) {
+//         console.error('Error creating post:', error);
+//         res.status(500).json({ error: 'Internal server error' });
+//     }
+// });
 
 // 투표 전체 조회 API (완)
-router.get('/posts', async (req, res, next) => {
-    //const {Likes,Comments} = req.body
-    const postList = await prisma.posts.findMany({
-        select: {
-            id: true,
-            title: true,
-            startDate: true,
-            endDate: true,
-        },
-        orderBy: {
-            createdAt: 'desc',
-        },
-    });
+router.get('/posts', getAllPostsController)
+// async (req, res, next) => {
+//     //const {Likes,Comments} = req.body
+//     const postList = await prisma.posts.findMany({
+//         select: {
+//             id: true,
+//             title: true,
+//             startDate: true,
+//             endDate: true,
+//         },
+//         orderBy: {
+//             createdAt: 'desc',
+//         },
+//     });
 
-    const response = postList.map((post) => ({
-        id: post.id,
-        title: post.title,
-        startDate: post.startDate,
-        endDate: post.endDate,
-    }));
-    return res.status(200).json(response);
-});
+//     const response = postList.map((post) => ({
+//         id: post.id,
+//         title: post.title,
+//         startDate: post.startDate,
+//         endDate: post.endDate,
+//     }));
+//     return res.status(200).json(response);
+// });
 
 // 투표 상세 조회 API (완)
 router.get('/posts/:postId', authMiddleware, async (req, res, next) => {
